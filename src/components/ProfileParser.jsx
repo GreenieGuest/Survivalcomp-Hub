@@ -1,15 +1,25 @@
 import React, { useState } from 'react'
+import { Flex, Container, Button, FileUpload, VStack, Alert } from "@chakra-ui/react"
+import { HiUpload } from "react-icons/hi"
 
 function extractPlayers(data) {
     // Helper function to extract player info from JSON data, whether array (my preferred format) or an object
-    const makePlayer = (obj) => {
+    const makePlayer = (obj, index = 0) => {
         const values = Object.values(obj);
         if (values.length === 0) return null;
-        return { id: Date.now() + Math.random(), name: values[0] }; // Simple unique ID
+        return {
+            id: Date.now() + Math.random() + index, // simple unique id
+            name: obj.name || obj.contestant || `Player ${index + 1}`,
+            color: obj.color || null,
+            str: obj.str || null,
+            dex: obj.dex || null,
+            int: obj.int || null,
+        };
     }
 
     if (Array.isArray(data)) {
-        return data.map((item, index) => ({ id: Date.now() + index, name: item.name || `Player ${index + 1}` }));
+        return data.map((item, index) => (
+            makePlayer(item, index)));
     } else if (typeof data === "object" && data !== null) {
         return [makePlayer(data)];
     }
@@ -18,8 +28,8 @@ function extractPlayers(data) {
 
 const ProfileParser = ({ playerList, setPlayerList }) => {
     const [jsonData, setJsonData] = useState(null)
-    const handleFileChange = (event) => {
-        const file = event.target.files?.[0];
+    const handleFileChange = ({ files }) => {
+        const file = files?.[0];
         if (file && file.type === "application/json") {
             const reader = new FileReader();
 
@@ -48,19 +58,28 @@ const ProfileParser = ({ playerList, setPlayerList }) => {
     }
 
     return (
-        <div>
-            <input type="file" style={{ display: "none" }} id="json-upload-button" accept=".json" onChange={handleFileChange} />
-            {/* You can add a custom button/label and hide the input for better styling if needed */}
-            <label htmlFor="json-upload-button" style={{ cursor: 'pointer', padding: '10px 15px', background: '#0b4020', color: 'white', borderRadius: '5px' }}>
-                Import Profiles (JSON)
-            </label>
-            
-            {jsonData && (
-                <div>
-                <h3>Successfully imported data</h3>
-                </div>
-            )}
-        </div>
+        <Container pt={5} width={'auto'}>
+            <Flex pb={5} justifyContent={"center"}>
+                <VStack>
+                <FileUpload.Root accept={[".json"]} onFileAccept={handleFileChange}>
+                    <FileUpload.HiddenInput />
+                        <FileUpload.Trigger asChild>
+                            <Button variant="outline" colorPalette="teal" size="sm">
+                            <HiUpload /> Import Profiles (JSON)
+                            </Button>
+                        </FileUpload.Trigger>
+                    <FileUpload.List />
+                </FileUpload.Root>
+                
+                {jsonData && (
+                    <Alert.Root status="success">
+                        <Alert.Indicator />
+                        <Alert.Title>Successfully parsed profiles!</Alert.Title>
+                    </Alert.Root>
+                )}
+                </VStack>
+            </Flex>
+        </Container>
     )
 };
 
