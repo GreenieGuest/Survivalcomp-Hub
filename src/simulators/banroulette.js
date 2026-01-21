@@ -1,12 +1,20 @@
 import { randomItem, randomInt } from "./utils";
 
 export function startGame(players) {
+  // initialize game: all players added, random barrel position, # players printed
   return {
     turn: 0,
+    castSize: players.length,
     barrel: randomInt(1,6),
+    chance: 1,
     alivePlayers: [...players],
     bannedPlayers: [],
-    lastEvent: "Game started with " + players.length + " players."
+    events: [
+      {
+        type: "system",
+        message: "Game started with " + players.length + " players."
+      }
+    ]
   };
 }
 
@@ -14,7 +22,13 @@ export function nextTurn(state) {
   if (state.alivePlayers.length <= 1) {
     return {
       ...state,
-      lastEvent: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again")
+      events: [
+        ...state.events,
+        {
+          type: "system",
+          message: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again")
+        }
+      ]
     };
   }
 
@@ -22,25 +36,42 @@ export function nextTurn(state) {
   // (The most simple of survivalcomps)
   const chosen = randomItem(state.alivePlayers);
   var roulette = randomInt(1,state.barrel);
+
   if (roulette == 1) {
     return {
       ...state,
       turn: state.turn + 1,
       barrel: randomInt(1,6),
+      chance: 1,
       alivePlayers: state.alivePlayers.filter(p => p.id !== chosen.id),
       bannedPlayers: [...state.bannedPlayers, chosen],
-      // List all remaining players
-      lastEvent: `${chosen.name} is chosen for Ban Roulette... and is BANNED. ` + state.alivePlayers.length + ` players remain: ${state.alivePlayers.filter(p => p.id !== chosen.id).map(p => p.name).join(", ")}`
+      events: [
+        ...state.events,
+        {
+          type: "ban",
+          chosen: chosen,
+          chance: state.chance,
+          survived: false,
+          remaining: state.alivePlayers.length - 1
+        }
+      ],
     };
   } else {
     return {
       ...state,
       turn: state.turn + 1,
+      chance: state.chance + 1,
       barrel: state.barrel - 1,
-      alivePlayers: state.alivePlayers,
-      bannedPlayers: state.bannedPlayers,
-      // List all remaining players
-      lastEvent: `${chosen.name} is chosen for Ban Roulette... and SURVIVES. ` + state.alivePlayers.length + ` players remain: ${state.alivePlayers.map(p => p.name).join(", ")}`
+      events: [
+        ...state.events,
+        {
+          type: "ban",
+          chosen: chosen,
+          chance: state.chance,
+          survived: true,
+          remaining: state.alivePlayers.length
+        }
+      ],
     };
   };
 

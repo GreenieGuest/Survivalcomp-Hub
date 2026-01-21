@@ -58,13 +58,13 @@ const ProfileParser = ({ playerList, setPlayerList }) => {
     }
 
     return (
-        <Container pt={5} width={'auto'}>
+        <Container>
             <Flex pb={5} justifyContent={"center"}>
-                <VStack>
+                <VStack alignItems="center">
                 <FileUpload.Root accept={[".json"]} onFileAccept={handleFileChange}>
                     <FileUpload.HiddenInput />
                         <FileUpload.Trigger asChild>
-                            <Button variant="outline" colorPalette="teal" size="sm">
+                            <Button variant="outline" colorPalette="teal" size="sm" alignSelf="center">
                             <HiUpload /> Import Profiles (JSON)
                             </Button>
                         </FileUpload.Trigger>
