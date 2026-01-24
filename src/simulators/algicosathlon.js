@@ -5,11 +5,8 @@ export function startGame(players) {
   return {
     turn: 0,
     castSize: players.length,
-    barrel: randomInt(1,6),
-    chance: 1,
-    winner: null,
-    alivePlayers: [...players],
-    bannedPlayers: [],
+    competing: [...players],
+    eliminated: [],
     events: [
       {
         type: "system",
@@ -27,8 +24,7 @@ export function nextTurn(state) {
         ...state.events,
         {
           type: "system",
-          message: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again"),
-          winner: state.alivePlayers[0] || null
+          message: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again")
         }
       ]
     };

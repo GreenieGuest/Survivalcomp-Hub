@@ -1,9 +1,10 @@
 import { useState } from "react";
-import {Button, Input, Container, Flex, Group, Alert, VStack, Box} from "@chakra-ui/react";
+import {Button, Input, Container, ColorPicker, parseColor, Portal, HStack, Group, Alert, VStack, Box} from "@chakra-ui/react";
 import { FaTrash } from "react-icons/fa";
 
 export default function PlayerCard({ playerList, setPlayerList }) {
     const [name, setName] = useState("");
+	const [color, setColor] = useState(parseColor("#ffffff"));
     const [emptyMessage, setEmptyMessage] = useState(false);
 
     const handlePostPlayer = (e) => {
@@ -16,6 +17,7 @@ export default function PlayerCard({ playerList, setPlayerList }) {
             const newPlayer = {
                 id: Date.now(),
                 name: name,
+                color: color.toString('hexa'),
             };
             const updatedPlayerList = [...playerList, newPlayer];
             setPlayerList(updatedPlayerList);
@@ -37,29 +39,48 @@ export default function PlayerCard({ playerList, setPlayerList }) {
 
     return (
         <Container width={'auto'}>
-            <VStack justifyContent={"center"}>
 			<Group attached w="full" maxW="sm">
                 <Input flex="1" placeholder="Enter player name..." value={name} width={400} onChange={(e) => setName(e.target.value)} />
                 <Button bg="bg.subtle" variant="outline" type="submit" onClick={handlePostPlayer}>
                     Add Player
                 </Button>
+                <ColorPicker.Root defaultValue={color} onValueChange={(e) => setColor(e.value)} maxW="130px">
+                    <ColorPicker.HiddenInput />
+                    <ColorPicker.Control>
+                        <ColorPicker.Input />
+                        <ColorPicker.Trigger />
+                    </ColorPicker.Control>
+                    <Portal>
+                        <ColorPicker.Positioner>
+                        <ColorPicker.Content>
+                            <ColorPicker.Area />
+                            <HStack>
+                            <ColorPicker.EyeDropper size="xs" variant="outline" />
+                            <ColorPicker.Sliders />
+                            </HStack>
+                        </ColorPicker.Content>
+                        </ColorPicker.Positioner>
+                    </Portal>
+                </ColorPicker.Root>
             </Group>
-
             {emptyMessage && (
                 <Alert.Root status="error">
                     <Alert.Indicator />
                     <Alert.Title>Player name cannot be empty</Alert.Title>
                 </Alert.Root>
             )}
-                {playerList.map((player) => (
-                    <Box key={player.id}>
-                        <span style={{color: player.color}}>{player.name}</span>
-                        <Button variant={'outline'} size="2xs" colorPalette={'red'} onClick={() => handleDeletePlayer(player.id)}>
-                            <FaTrash /> Delete
-                        </Button>
-                    </Box>
-                ))}
-            </VStack>
+            <Container maxH="600px" scrollBehavior="smooth" overflowY="auto" mt={3}> 
+                <VStack justifyContent={"center"}>
+                    {playerList.map((player) => (
+                        <Box key={player.id}>
+                            <span style={{color: player.color}}>{player.name} </span>
+                            <Button variant={'outline'} size="2xs" colorPalette={'red'} onClick={() => handleDeletePlayer(player.id)}>
+                                <FaTrash /> Delete
+                            </Button>
+                        </Box>
+                    ))}
+                </VStack>
+            </Container>
         </Container>
     );
 }
