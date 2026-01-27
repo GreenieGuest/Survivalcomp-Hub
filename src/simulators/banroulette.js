@@ -1,15 +1,18 @@
 import { randomItem, randomInt } from "./utils";
 
-export function startGame(players) {
+export function initialize_BR(players) {
   // initialize game: all players added, random barrel position, # players printed
   return {
     turn: 0,
+    // Sim fundamentals
+    points: false,
+    teams: false,
     castSize: players.length,
     barrel: randomInt(1,6),
     chance: 1,
     winner: null,
-    alivePlayers: [...players],
-    bannedPlayers: [],
+    currentlyPlaying: [...players],
+    eliminated: [],
     events: [
       {
         type: "system",
@@ -19,16 +22,30 @@ export function startGame(players) {
   };
 }
 
-export function nextTurn(state) {
-  if (state.alivePlayers.length <= 1) {
+export function FF_BR(state, playerList) { // repeat banRoulette until winner
+  if (!state || state.winner) {
+    if (playerList.length === 0) {
+      return state; // prevent game breaking
+    }
+    state = initialize_BR(playerList);
+  }
+  let nextState = state;
+  while (!nextState.winner) {
+    nextState = banRoulette(nextState);
+  }
+  return nextState;
+}
+
+export function banRoulette(state) {
+  if (state.currentlyPlaying.length <= 1) {
     return {
       ...state,
+      winner: state.currentlyPlaying[0] || null,
       events: [
         ...state.events,
         {
           type: "system",
-          message: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again"),
-          winner: state.alivePlayers[0] || null
+          message: "Winner: " + ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + "! Press 'Start Game' to simulate again"),
         }
       ]
     };
@@ -36,7 +53,7 @@ export function nextTurn(state) {
 
   // Every round... pick one random player to be eliminated.
   // (The most simple of survivalcomps)
-  const chosen = randomItem(state.alivePlayers);
+  const chosen = randomItem(state.currentlyPlaying);
   var roulette = randomInt(1,state.barrel);
 
   if (roulette == 1) {
@@ -45,8 +62,8 @@ export function nextTurn(state) {
       turn: state.turn + 1,
       barrel: randomInt(1,6),
       chance: 1,
-      alivePlayers: state.alivePlayers.filter(p => p.id !== chosen.id),
-      bannedPlayers: [...state.bannedPlayers, chosen],
+      currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
+      eliminated: [...state.eliminated, chosen], // add to banned players
       events: [
         ...state.events,
         {
@@ -54,7 +71,7 @@ export function nextTurn(state) {
           chosen: chosen,
           chance: state.chance,
           survived: false,
-          remaining: state.alivePlayers.length - 1
+          remaining: state.currentlyPlaying.length - 1
         }
       ],
     };
@@ -71,7 +88,7 @@ export function nextTurn(state) {
           chosen: chosen,
           chance: state.chance,
           survived: true,
-          remaining: state.alivePlayers.length
+          remaining: state.currentlyPlaying.length
         }
       ],
     };

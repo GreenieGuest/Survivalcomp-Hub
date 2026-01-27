@@ -18,6 +18,9 @@ export default function PlayerCard({ playerList, setPlayerList }) {
                 id: Date.now(),
                 name: name,
                 color: color.toString('hexa'),
+                str: 3,
+                dex: 3,
+                int: 3,
             };
             const updatedPlayerList = [...playerList, newPlayer];
             setPlayerList(updatedPlayerList);
@@ -47,7 +50,7 @@ export default function PlayerCard({ playerList, setPlayerList }) {
                 <ColorPicker.Root defaultValue={color} onValueChange={(e) => setColor(e.value)} maxW="130px">
                     <ColorPicker.HiddenInput />
                     <ColorPicker.Control>
-                        <ColorPicker.Input />
+                        {/*<ColorPicker.Input />*/}
                         <ColorPicker.Trigger />
                     </ColorPicker.Control>
                     <Portal>

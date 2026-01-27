@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Flex, Container, Button, FileUpload, VStack, Alert } from "@chakra-ui/react"
+import { Flex, Container, Button, FileUpload, VStack, Alert, HStack } from "@chakra-ui/react"
 import { HiUpload } from "react-icons/hi"
 
 function extractPlayers(data) {
@@ -11,9 +11,9 @@ function extractPlayers(data) {
             id: Date.now() + Math.random() + index, // simple unique id
             name: obj.name || obj.contestant || `Player ${index + 1}`,
             color: obj.color || null,
-            str: obj.str || 3,
+            str: obj.str || obj.physStat || 3,
             dex: obj.dex || 3,
-            int: obj.int || 3,
+            int: obj.int || obj.stratStat || 3,
         };
     }
 
@@ -63,14 +63,16 @@ const ProfileParser = ({ playerList, setPlayerList }) => {
                 <VStack alignItems="center">
                 <FileUpload.Root accept={[".json"]} onFileAccept={handleFileChange}>
                     <FileUpload.HiddenInput />
+                <HStack>
                         <FileUpload.Trigger asChild>
                             <Button variant="outline" colorPalette="teal" size="sm" alignSelf="center">
                             <HiUpload /> Import Profiles (JSON)
                             </Button>
                         </FileUpload.Trigger>
+                <Button variant={'outline'} colorPalette={'red'} size="sm" onClick={() => setPlayerList([])}>Clear Players</Button>
+                </HStack>
                     <FileUpload.List />
                 </FileUpload.Root>
-                
                 {jsonData && (
                     <Alert.Root status="success">
                         <Alert.Indicator />

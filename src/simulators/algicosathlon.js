@@ -1,76 +1,159 @@
 import { randomItem, randomInt } from "./utils";
 
-export function startGame(players) {
+function getBasePoints(numPlayers) {
+  // returns an array of base points for players based on number of players
+  const basePoints = [];
+  const maxValue = 100
+  const minValue = 1 // to be configured later
+
+  var ratio = maxValue ** (1/(numPlayers - 1));
+  for (let i = 0; i < numPlayers; i++) {
+    basePoints.push(maxValue / (ratio ** i)); // Don't round.... it makes things more fun with large casts
+  }
+
+  return basePoints;
+}
+
+function elimination(athletes) {
+    console.log(athletes);
+    // find eliminated player
+    athletes.sort((a, b) => getPoints(a) - getPoints(b));
+    let eliminated = athletes[0];
+    // sort by reverse for the leaderboard
+    athletes.sort((a, b) => getPoints(b) - getPoints(a));
+    
+    console.log(`${eliminated.name} has been ELIMINATED with ${eliminated.points} points. ${athletes.length - 1} remain. But where did I go wrong?\n`);
+    return eliminated;
+}
+
+function getPoints(player) {
+    return player.points;
+}
+
+function challenge(athletes) {
+    // For each athlete, they start out with 0 points
+    let playerPoints = Array(athletes.length).fill(0);
+
+    // Based on challenge (placeholder) they will perform based on stats
+    for (let player = 0; player < athletes.length; player++) {
+        playerPoints[player] = randomInt(1, athletes[player].str+athletes[player].dex+athletes[player].int); // Placeholder for actual challenge logic
+    }
+
+    // Calculate who has the most points and who has the least
+    let placements = [...playerPoints]; // Place the SCORES in this array
+    placements.sort((a, b) => b - a);
+    let results = [...placements]; // Place the SORTED SCORES in this array
+
+    // Convert placements from scores to player indices
+
+    for (let x = 0; x < placements.length; x++) {
+        let index = playerPoints.indexOf(placements[x]);
+        placements[x] = index;
+        playerPoints[index] = 0;
+    }
+    // Return to the main function an array with player placements based on index, and their scores in the challenge
+    return [placements, results];
+}
+
+export function FF_AS(state, playerList) { // repeat until winner
+  if (!state || state.winner) {
+    if (playerList.length === 0) {
+      return state; // prevent game breaking
+    }
+    state = initialize_AS(playerList);
+  }
+  let nextState = state;
+  while (!nextState.winner) {
+    nextState = algicosathlon(nextState);
+  }
+  return nextState;
+}
+
+export function initialize_AS(players) {
   // initialize game: all players added, random barrel position, # players printed
   return {
     turn: 0,
+    // Sim fundamentals
+    points: true,
+    teams: false,
+    // Game fundamentals
     castSize: players.length,
-    competing: [...players],
+    winner: null,
+    base_points: getBasePoints(players.length),
+    rate_of_change: 1.5,
+    //Give each player a new points property
+    currentlyPlaying: players.map(p => ({...p, points: 0, lastPlacement: 3})),
     eliminated: [],
+    challenges: [],
+    // Data collection
+    placements: [],
+    scores: [],
+
     events: [
       {
         type: "system",
-        message: "Game started with " + players.length + " players."
+        message: "Game started with " + players.length + " athletes."
       }
     ]
   };
 }
 
-export function nextTurn(state) {
-  if (state.alivePlayers.length <= 1) {
+export function algicosathlon(state) {
+  // round format:
+  // athletes compete in a challenge and are allocated points based on their scores
+  // placements, gains and leaderboard are updated
+  // athlete with the least points is eliminated
+  // return state
+
+  // win conditions (proper finale to be added later)
+  if (state.currentlyPlaying.length <= 1) {
     return {
       ...state,
+      winner: state.currentlyPlaying[0] || null,
       events: [
         ...state.events,
         {
           type: "system",
-          message: "Winner: " + ((state.alivePlayers[0] ? state.alivePlayers[0].name : "No one") + "! Press 'Start Game' to simulate again")
+          message: "Winner: " + ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + "! Press 'Start Game' to simulate again"),
         }
       ]
     };
   }
 
-  // Every round... pick one random player to be eliminated.
-  // (The most simple of survivalcomps)
-  const chosen = randomItem(state.alivePlayers);
-  var roulette = randomInt(1,state.barrel);
+  let base_points = state.base_points;
+  let rate_of_change = state.rate_of_change;
 
-  if (roulette == 1) {
+  console.log("Base Points this round: " + base_points);
+
+
+	let [placements, score] = challenge(state.currentlyPlaying);
+
+  for (let x = 0; x < placements.length; x++) {
+    state.currentlyPlaying[placements[x]].points += Math.ceil(base_points[x] * Math.pow(rate_of_change, state.turn));
+    // Log each player's points this round
+    console.log(`${state.currentlyPlaying[placements[x]].name} placed ${x + 1} and earned ${Math.ceil(base_points[x])} * ${Math.pow(rate_of_change, state.turn)} points, for a total of ${state.currentlyPlaying[placements[x]].points} points.`);
+  }
+  console.log(state.currentlyPlaying);
+
+  // record last placement for the cool arrows on the leaderboard
+  state.currentlyPlaying.forEach((player, index) => {
+    player.lastPlacement = index;
+  });
+  const chosen = elimination(state.currentlyPlaying);
+  console.log("This should only run once");
+
     return {
       ...state,
       turn: state.turn + 1,
-      barrel: randomInt(1,6),
-      chance: 1,
-      alivePlayers: state.alivePlayers.filter(p => p.id !== chosen.id),
-      bannedPlayers: [...state.bannedPlayers, chosen],
+      currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
+      eliminated: [...state.eliminated, chosen], // add to banned players
       events: [
         ...state.events,
         {
-          type: "ban",
+          type: "algoElim",
           chosen: chosen,
-          chance: state.chance,
-          survived: false,
-          remaining: state.alivePlayers.length - 1
+          remaining: state.currentlyPlaying.length - 1
         }
       ],
     };
-  } else {
-    return {
-      ...state,
-      turn: state.turn + 1,
-      chance: state.chance + 1,
-      barrel: state.barrel - 1,
-      events: [
-        ...state.events,
-        {
-          type: "ban",
-          chosen: chosen,
-          chance: state.chance,
-          survived: true,
-          remaining: state.alivePlayers.length
-        }
-      ],
-    };
-  };
-
 }
