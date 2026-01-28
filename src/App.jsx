@@ -4,6 +4,7 @@ import ProfileParser from "./components/ProfileParser.jsx";
 import StillInTheRunning from "./components/StillInTheRunning.jsx";
 import SimulationSelector from "./components/SimulationSelector.jsx";
 import PointsLeaderboard from "./components/PointsLeaderboard.jsx";
+import PlacementGains from "./components/PlacementGains.jsx";
 import StatsTable from "./components/StatsTable.jsx";
 import EventLog from "./simulators/EventLog.jsx";
 
@@ -24,6 +25,7 @@ import './App.css'
 function App() {
   const [playerList, setPlayerList] = useState([]);
   const [playerStats, setPlayerStats] = useState({}); // Future use for storing player stats across simulations
+  const [simCount, setSimCount] = useState(0);
 
   const [simulation, setSimulation] = useState(null);
   const [runningSim, setRunningSim] = useState(null); // running sim may be different if user messes around
@@ -101,8 +103,15 @@ function App() {
         wins: prev.wins + 1,
       };
     }
+    const sims = simCount + 1;
+    setSimCount(sims);
 
     return newStats;
+  }
+
+  function clearStats() {
+    setPlayerStats({});
+    setSimCount(0);
   }
 
   useEffect(() => {
@@ -125,7 +134,7 @@ function App() {
   </Container>
   , icon: <MdOutlinePeople /> },
   { value: "configuration", title: "Configuration", text: "To Be Implemented", icon: <GrConfigure /> },
-  { value: "stats", title: "Stats", text:<Container>
+  { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
               <StatsTable playerStatsList={playerStats} />
     </Container>, icon: <FaChartSimple /> },
   ]
@@ -160,7 +169,7 @@ function App() {
         <SimulationSelector simulation={simulation} setSimulation={setSimulation} />
         <Flex mt={5} gap={1} justifyContent={'center'}>
 
-        <Button variant={'outline'} colorPalette={'red'} onClick={() => setPlayerStats({})}>Clear Data</Button>
+        <Button variant={'outline'} colorPalette={'red'} onClick={clearStats}>Clear Data</Button>
         <Button variant={'outline'} colorPalette={'green'} onClick={handleStartGame} disabled={!simulation}>Start Game</Button>
         <Button variant={'outline'} colorPalette={'yellow'} onClick={handleNextTurn} disabled={!gameState || gameState.winner}>Next Turn</Button>
         <Button variant={'outline'} colorPalette={'purple'} onClick={handleFastForward} disabled={!simulation}><FaFastForward /></Button>
@@ -170,7 +179,8 @@ function App() {
                 <Tabs.Trigger value="tab-1">Description</Tabs.Trigger>
                 <Tabs.Trigger value="tab-2">Still In The Running</Tabs.Trigger>
                 {gameState && gameState.points == false && <Tabs.Trigger value="tab-3">Elimination Order</Tabs.Trigger>}
-                {gameState && gameState.points == true && <Tabs.Trigger value="tab-4">Leaderboard</Tabs.Trigger>}
+                {gameState && gameState.points == true && <Tabs.Trigger value="tab-4">Placements/Gains</Tabs.Trigger>}
+                {gameState && gameState.points == true && <Tabs.Trigger value="tab-5">Leaderboard</Tabs.Trigger>}
             </Tabs.List>
             <Tabs.Content value="tab-1">
                <Container>
@@ -190,6 +200,9 @@ function App() {
                 </VStack>
             </Tabs.Content>
             <Tabs.Content value="tab-4">
+              <PlacementGains playerList={gameState.currentlyPlaying} lastEliminatedPlayer={gameState.eliminated[gameState.eliminated.length - 1]} />
+            </Tabs.Content>
+            <Tabs.Content value="tab-5">
               <PointsLeaderboard playerList={gameState.currentlyPlaying} eliminatedList={gameState.eliminated} />
             </Tabs.Content>
         </Tabs.Root>}

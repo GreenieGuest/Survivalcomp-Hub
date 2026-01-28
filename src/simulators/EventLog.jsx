@@ -25,7 +25,8 @@ export default function EventLog({events}) {
     if (event.type === "algoElim") {
     return (
         <div>
-            <p><span style={{ color: event.chosen.color }}>{event.chosen.name}</span> is been eliminated with {event.chosen.points} points.</p>
+            <p>Challenge: {event.challenge}</p>
+            <p><span style={{ color: event.chosen.color }}>{event.chosen.name}</span> has been eliminated with {event.chosen.points} points.</p>
             <p>{event.remaining} players remain.</p>
         </div>
     );

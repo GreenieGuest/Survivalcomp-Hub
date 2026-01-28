@@ -1,8 +1,14 @@
-export function randomItem(array) {
+export function randomChoice(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
 export function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function rollPass(stat, threshold) {
+    let playerRoll = randomInt(1, stat);
+    let boardRoll = randomInt(1, threshold);
+    return playerRoll >= boardRoll;
 }
 
 export function suffix(n) {

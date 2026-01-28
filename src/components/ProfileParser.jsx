@@ -11,9 +11,9 @@ function extractPlayers(data) {
             id: Date.now() + Math.random() + index, // simple unique id
             name: obj.name || obj.contestant || `Player ${index + 1}`,
             color: obj.color || null,
-            str: obj.str || obj.physStat || 3,
-            dex: obj.dex || 3,
-            int: obj.int || obj.stratStat || 3,
+            str: obj.str || obj.strStat || obj.physStat || 3,
+            dex: obj.dex || obj.dexStat || 3,
+            int: obj.int || obj.intStat || obj.stratStat || 3,
         };
     }
 

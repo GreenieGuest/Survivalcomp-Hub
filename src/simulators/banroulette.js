@@ -1,4 +1,4 @@
-import { randomItem, randomInt } from "./utils";
+import { randomChoice, randomInt } from "./utils";
 
 export function initialize_BR(players) {
   // initialize game: all players added, random barrel position, # players printed
@@ -53,7 +53,7 @@ export function banRoulette(state) {
 
   // Every round... pick one random player to be eliminated.
   // (The most simple of survivalcomps)
-  const chosen = randomItem(state.currentlyPlaying);
+  const chosen = randomChoice(state.currentlyPlaying);
   var roulette = randomInt(1,state.barrel);
 
   if (roulette == 1) {

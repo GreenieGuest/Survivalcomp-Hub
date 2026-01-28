@@ -18,6 +18,7 @@ function calculateChange(placement, lastPlacement) {
 }
 
 const PointsLeaderboard = ({ playerList, eliminatedList }) => {
+    const lastEliminatedPlayer = eliminatedList[eliminatedList.length - 1];
     const items = playerList.map((player, index) => ({
         id: index,
         name: player.name,
@@ -31,7 +32,8 @@ const PointsLeaderboard = ({ playerList, eliminatedList }) => {
         id: eliminatedList.length - index - 1,
         name: player.name,
         points: player.points,
-        color: player.color
+        color: player.color,
+        lastPlacement: (lastEliminatedPlayer.id == player.id) ? player.lastPlacement : null
     }));
     items2.reverse();
 
@@ -59,7 +61,7 @@ const PointsLeaderboard = ({ playerList, eliminatedList }) => {
                 <Table.Cell textAlign="center">{items.length + item.id + 1}{suffix(items.length + item.id + 1)}</Table.Cell>
                 <Table.Cell textAlign="center"><span style={{ color: item.color }}>{item.name}</span></Table.Cell>
                 <Table.Cell textAlign="center">{item.points}</Table.Cell>
-                <Table.Cell textAlign="center">{"ELIMINATED"}</Table.Cell>
+                <Table.Cell textAlign="center">{item.lastPlacement ? calculateChange(items.length + item.id, item.lastPlacement) : <span style={{ color: "red" }}>ELIMINATED</span>}</Table.Cell>
             </Table.Row>
             ))}
         </Table.Body>

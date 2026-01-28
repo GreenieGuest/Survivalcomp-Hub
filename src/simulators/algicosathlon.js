@@ -1,4 +1,5 @@
-import { randomItem, randomInt } from "./utils";
+import { randomChoice } from "./utils";
+import { challenge } from "./modules";
 
 function getBasePoints(numPlayers) {
   // returns an array of base points for players based on number of players
@@ -30,13 +31,16 @@ function getPoints(player) {
     return player.points;
 }
 
-function challenge(athletes) {
+// Challenge FFA: all athletes compete, placements and scores returned
+// Parameters: challenge name, competing player array
+// In the future: The Ultimate Showdown...
+function challengeFFA(challengeName, athletes) {
     // For each athlete, they start out with 0 points
     let playerPoints = Array(athletes.length).fill(0);
 
     // Based on challenge (placeholder) they will perform based on stats
     for (let player = 0; player < athletes.length; player++) {
-        playerPoints[player] = randomInt(1, athletes[player].str+athletes[player].dex+athletes[player].int); // Placeholder for actual challenge logic
+        playerPoints[player] = challenge(challengeName, athletes[player]);
     }
 
     // Calculate who has the most points and who has the least
@@ -82,9 +86,11 @@ export function initialize_AS(players) {
     base_points: getBasePoints(players.length),
     rate_of_change: 1.5,
     //Give each player a new points property
-    currentlyPlaying: players.map(p => ({...p, points: 0, lastPlacement: 3})),
+    // lastPlacement is for the leaderboard arrows
+    // score and gains are for algicosathlon nerds and purists
+    currentlyPlaying: players.map(p => ({...p, points: 0, lastPlacement: 3, score: 0, gains: 0})),
     eliminated: [],
-    challenges: [],
+    challenges: [], // For the Ultimate Showdown
     // Data collection
     placements: [],
     scores: [],
@@ -125,11 +131,22 @@ export function algicosathlon(state) {
 
   console.log("Base Points this round: " + base_points);
 
+  // Select a challenge
+  let challengeName;
+      const challengeTypes = ["Running (100yd)", "Discus Throw", "Archery", "PSaT", "BMX Cycling", "Obstacle Course",
+        "Ninja Takedown", "The Ultimate Test of Your Sheer Willpower", "Maxing", "The FitnessGram Pacer Test",
+        "The ASCI Spelling Bee", "Pole Vault", "Juggling", "Robot Takedown", "Mechanical Bull", "Shot Put",
+        "Dogfighting", "Triathalon", "Beat the AI"];
+      challengeName = randomChoice(challengeTypes);
+      state.challenges.push(challengeName);
+  // }
 
-	let [placements, score] = challenge(state.currentlyPlaying);
+	let [placements, scores] = challengeFFA(challengeName, state.currentlyPlaying);
 
   for (let x = 0; x < placements.length; x++) {
     state.currentlyPlaying[placements[x]].points += Math.ceil(base_points[x] * Math.pow(rate_of_change, state.turn));
+    state.currentlyPlaying[placements[x]].score = scores[x]; // 1 is best, etc.
+    state.currentlyPlaying[placements[x]].gains = Math.ceil(base_points[x] * Math.pow(rate_of_change, state.turn));
     // Log each player's points this round
     console.log(`${state.currentlyPlaying[placements[x]].name} placed ${x + 1} and earned ${Math.ceil(base_points[x])} * ${Math.pow(rate_of_change, state.turn)} points, for a total of ${state.currentlyPlaying[placements[x]].points} points.`);
   }
@@ -152,6 +169,7 @@ export function algicosathlon(state) {
         {
           type: "algoElim",
           chosen: chosen,
+          challenge: challengeName,
           remaining: state.currentlyPlaying.length - 1
         }
       ],

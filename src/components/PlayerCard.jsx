@@ -42,7 +42,7 @@ export default function PlayerCard({ playerList, setPlayerList }) {
 
     return (
         <Container width={'auto'}>
-			<Group attached w="full" maxW="sm">
+			<Group attached w="full" maxW="xs">
                 <Input flex="1" placeholder="Enter player name..." value={name} width={400} onChange={(e) => setName(e.target.value)} />
                 <Button bg="bg.subtle" variant="outline" type="submit" onClick={handlePostPlayer}>
                     Add Player

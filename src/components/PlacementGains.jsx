@@ -1,13 +1,20 @@
 import { Table } from "@chakra-ui/react"
 import { suffix } from "../simulators/utils";
 
-const PlacementGains = ({ playerList, eliminatedList }) => {
-    const items = playerList.map((player, index) => ({
+const PlacementGains = ({ playerList, lastEliminatedPlayer }) => {
+    if (lastEliminatedPlayer == null) {
+        return <div>No placements available yet.</div>;
+    }
+
+    const items = [...playerList, lastEliminatedPlayer].map((player, index) => ({
         id: index,
         name: player.name,
-        points: player.points,
-        color: player.color
-    }));
+        color: player.color,
+        score: player.score,
+        gains: player.gains
+    }))
+    // Sort by score descending (1st place → last)
+    .sort((a, b) => b.score - a.score);
 
     return (
         <Table.Root size="sm">
@@ -20,12 +27,12 @@ const PlacementGains = ({ playerList, eliminatedList }) => {
             </Table.Row>
         </Table.Header>
         <Table.Body>
-            {items.map((item) => (
+            {items.map((item, index) => (
             <Table.Row key={item.id}>
-                <Table.Cell textAlign="center">{item.id + 1}{suffix(item.id + 1)}</Table.Cell>
+                <Table.Cell textAlign="center">{index + 1}{suffix(index + 1)}</Table.Cell>
                 <Table.Cell textAlign="center"><span style={{ color: item.color }}>{item.name}</span></Table.Cell>
-                <Table.Cell textAlign="center">{item.points}</Table.Cell>
-                <Table.Cell textAlign="center">{item.lastPlacement ? `${suffix(item.lastPlacement)} place` : "N/A"}</Table.Cell>
+                <Table.Cell textAlign="center">{item.score}</Table.Cell>
+                <Table.Cell textAlign="center">+{item.gains} points</Table.Cell>
             </Table.Row>
             ))}
         </Table.Body>
