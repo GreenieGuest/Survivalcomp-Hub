@@ -10,6 +10,7 @@ import EventLog from "./simulators/EventLog.jsx";
 
 import { FF_BR, initialize_BR, banRoulette } from "./simulators/banroulette";
 import { FF_AS, initialize_AS, algicosathlon } from "./simulators/algicosathlon";
+import { FF_MI, initialize_MI, murderIsland } from "./simulators/murderisland";
 
 import {Accordion, Icon, Span, Text, Container, Flex, Heading, Button, VStack, Tabs, Link} from "@chakra-ui/react";
 
@@ -41,6 +42,11 @@ function App() {
     initialize: initialize_AS,
     nextTurn: algicosathlon,
     fastForward: FF_AS,
+  },
+  mi: { // Murder Island
+    initialize: initialize_MI,
+    nextTurn: murderIsland,
+    fastForward: FF_MI,
   },
   // Board Game Insanity
   // Survivor
