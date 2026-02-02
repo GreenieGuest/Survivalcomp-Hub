@@ -14,6 +14,8 @@ function extractPlayers(data) {
             str: obj.str || obj.strStat || obj.physStat || 3,
             dex: obj.dex || obj.dexStat || 3,
             int: obj.int || obj.intStat || obj.stratStat || 3,
+            // Sim-specific
+            clues: obj.clues || null,
         };
     }
 

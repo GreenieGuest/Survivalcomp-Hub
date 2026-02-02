@@ -8,6 +8,17 @@ const clues = ["Black","Blonde","Brunette","Ginger",
 
 export function initialize_MI(players) {
   // initialize game: all players added, random barrel position, # players printed
+  const playerProfiles = players.map(p => (
+        {...p,
+        kills: 0,
+        votes: 0,
+        votedFor: null,
+        causeOfDeath: null,
+        correctVotes: 0,
+        // No duplicate clues
+        clues: p.clues || [randomChoice(clues), randomChoice(clues), randomChoice(clues), randomChoice(clues)]
+    }));
+
   return {
     turn: 0,
     // Sim fundamentals
@@ -16,22 +27,15 @@ export function initialize_MI(players) {
     // Game fundamentals
     castSize: players.length,
     winner: null,
-    currentlyPlaying: players.map(p => (
-        {...p,
-        kills: 0,
-        votes: 0,
-        votedFor: null,
-        causeOfDeath: null,
-        correctVotes: 0,
-        clues: p.clues || [randomChoice(clues), randomChoice(clues), randomChoice(clues), randomChoice(clues)]
-    })),
+    currentlyPlaying: playerProfiles,
     eliminated: [],
     //Sim-specific
 
     events: [
       {
-        type: "system",
-        message: "Game started with " + players.length + " players."
+        type: "murderIslandStart",
+        players: playerProfiles,
+        message: players.length + " players are trapped on Murder Island..."
       }
     ]
   };
@@ -69,15 +73,17 @@ export function murderIsland(state) {
     const murderer = randomChoice(state.currentlyPlaying);
     const victim = randomChoice(state.currentlyPlaying.filter(p => p.id !== murderer.id))
 
-    if (state.currentlyPlaying.length <= 1) { // murderer victory
+    if (state.currentlyPlaying.filter(p => p.id !== victim.id).length <= 1) { // murderer victory
         return {
         ...state,
-        winner: state.currentlyPlaying[0] || null,
+        winner: murderer || null,
+        currentlyPlaying: [],
+        eliminated: [...state.eliminated, victim, murderer], // add to banned players
         events: [
             ...state.events,
             {
             type: "system",
-            message: ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + " is the sole survivor of Murder Island."),
+            message: murderer.name + " eliminates " + victim.name + " and becomes the sole survivor of Murder Island.",
             }
         ]
         };
@@ -85,9 +91,9 @@ export function murderIsland(state) {
 
     // Clue Stomp
     const realClue1 = randomChoice(murderer.clues);
-    const realClue2 = randomChoice(murderer.clues);
-    const fakeClue1 = randomChoice(clues);
-    const fakeClue2 = randomChoice(clues);
+    const realClue2 = randomChoice(murderer.clues.filter(c => c !== realClue1));
+    const fakeClue1 = randomChoice(clues.filter(c => !murderer.clues.includes(c)));
+    const fakeClue2 = randomChoice(clues.filter(c => !murderer.clues.includes(c) && c !== fakeClue1));
 
     const potentialSuspects = state.currentlyPlaying.filter(p => p.id !== victim.id && p.clues.includes(realClue1) && (p.clues.includes(realClue2) || p.clues.includes(fakeClue1) || p.clues.includes(fakeClue2)))
     const voters = state.currentlyPlaying.filter(p =>  p.id !== victim.id && !potentialSuspects.includes(p));
