@@ -5,6 +5,18 @@ export function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+export function randomSample(array, n) {
+  const result = [];
+  const copy = array.slice();
+
+  while (result.length < n && copy.length > 0) {
+    const index = randomInt(0, copy.length - 1);
+    result.push(copy.splice(index, 1)[0]);
+  }
+
+  return result;
+}
+
 export function rollPass(stat, threshold) {
     let playerRoll = randomInt(1, stat);
     let boardRoll = randomInt(1, threshold);

@@ -6,13 +6,15 @@ import SimulationSelector from "./components/SimulationSelector.jsx";
 import PointsLeaderboard from "./components/PointsLeaderboard.jsx";
 import PlacementGains from "./components/PlacementGains.jsx";
 import StatsTable from "./components/StatsTable.jsx";
+import StatsChart from "./components/StatsChart.jsx";
 import EventLog from "./simulators/EventLog.jsx";
+import scLogo from "./assets/survivalcomp.png";
 
 import { FF_BR, initialize_BR, banRoulette } from "./simulators/banroulette";
 import { FF_AS, initialize_AS, algicosathlon } from "./simulators/algicosathlon";
 import { FF_MI, initialize_MI, murderIsland } from "./simulators/murderisland";
 
-import {Accordion, Icon, Span, Text, Container, Flex, Heading, Button, VStack, Tabs, Link} from "@chakra-ui/react";
+import {Accordion, Icon, Span, Text, Container, Flex, Heading, Button, VStack, Tabs, Link, Image} from "@chakra-ui/react";
 
 // Icons
 import { MdOutlinePeople } from "react-icons/md";
@@ -142,13 +144,30 @@ function App() {
   { value: "configuration", title: "Configuration", text: "To Be Implemented", icon: <GrConfigure /> },
   { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
               <StatsTable playerStatsList={playerStats} />
+              <StatsChart playerStatsList={playerStats} />
     </Container>, icon: <FaChartSimple /> },
   ]
+
+  //Load local storage profiles upon startup
+  useEffect(() => {
+    const storedPlayers = localStorage.getItem("playerProfiles");
+    if (storedPlayers) {
+      setPlayerList(JSON.parse(storedPlayers));
+    }
+  }, []);
+
+  //Save player profiles in local storage
+  useEffect(() => {
+    localStorage.setItem("playerProfiles", JSON.stringify(playerList));
+  }, [playerList]);
 
 
   return (
     <Container pt={5} width={'auto'}>
-      <Heading fontSize={'4xl'} padding="40px" color={'green'}>Survivalcomp Hub</Heading>
+      <Flex justifyContent={'center'} alignItems={'center'} gap={3} flexWrap={'wrap'}>
+        <Heading fontSize={'4xl'} padding="5px" color={'green'}>Survivalcomp Hub</Heading>
+        <Image src={scLogo} height="50px" className="logo" alt="Survivalcomp logo" />
+      </Flex>
       <Text>A web app dedicated to the simulation of various survival competitions.</Text>
       <Text>You can add players, import profiles from JSON files, and simulate game turns to see who gets eliminated.</Text>
       <Text>Created by GreenieGuest, Inspired by BrantSteele</Text>
