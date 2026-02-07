@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {Button, Input, Container, ColorPicker, parseColor, Portal, HStack, Group, Alert, VStack, Box} from "@chakra-ui/react";
 import { FaTrash } from "react-icons/fa";
+import { StatsCell } from "./StatsPopup.jsx";
 
 export default function PlayerCard({ playerList, setPlayerList }) {
     const [name, setName] = useState("");
@@ -75,12 +76,12 @@ export default function PlayerCard({ playerList, setPlayerList }) {
             <Container maxH="600px" scrollBehavior="smooth" overflowY="auto" mt={3}> 
                 <VStack justifyContent={"center"}>
                     {playerList.map((player) => (
-                        <Box key={player.id}>
-                            <span style={{color: player.color}}>{player.name} </span>
+                        <HStack key={player.id} gap={0}>
+                            <StatsCell currentProfile={player} setPlayerList={setPlayerList} />
                             <Button variant={'outline'} size="2xs" colorPalette={'red'} onClick={() => handleDeletePlayer(player.id)}>
                                 <FaTrash /> Delete
                             </Button>
-                        </Box>
+                        </HStack>
                     ))}
                 </VStack>
             </Container>

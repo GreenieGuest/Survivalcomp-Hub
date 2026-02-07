@@ -31,6 +31,9 @@ export function FF_BR(state, playerList) { // repeat banRoulette until winner
   }
   let nextState = state;
   while (!nextState.winner) {
+    if (nextState.currentlyPlaying.length === 0) { // prevent game breaking
+      break;
+    }
     nextState = banRoulette(nextState);
   }
   return nextState;
@@ -38,14 +41,22 @@ export function FF_BR(state, playerList) { // repeat banRoulette until winner
 
 export function banRoulette(state) {
   if (state.currentlyPlaying.length <= 1) {
-    return {
+      var soleSurvivor = null;
+      if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
+        soleSurvivor = state.eliminated[state.eliminated.length - 1]; // last eliminated player wins by default
+      } else {
+        soleSurvivor = state.currentlyPlaying[0];
+      }
+      return {
       ...state,
-      winner: state.currentlyPlaying[0] || null,
+      winner: soleSurvivor || null,
+      currentlyPlaying: [],
+      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
       events: [
         ...state.events,
         {
           type: "system",
-          message: "Winner: " + ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + "! Press 'Start Game' to simulate again"),
+          message: "Winner: " + ((soleSurvivor ? soleSurvivor.name : "No one") + "! Press 'Start Game' to simulate again"),
         }
       ]
     };

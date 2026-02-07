@@ -50,6 +50,9 @@ export function FF_MI(state, playerList) { // repeat murderIsland until winner
   }
   let nextState = state;
   while (!nextState.winner) {
+    if (nextState.currentlyPlaying.length === 0) { // prevent game breaking
+      break;
+    }
     nextState = murderIsland(nextState);
   }
   return nextState;
@@ -57,14 +60,22 @@ export function FF_MI(state, playerList) { // repeat murderIsland until winner
 
 export function murderIsland(state) {
     if (state.currentlyPlaying.length <= 1) {
+        var soleSurvivor = null;
+        if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
+          soleSurvivor = state.eliminated[state.eliminated.length - 1]; // last eliminated player wins by default
+        } else {
+          soleSurvivor = state.currentlyPlaying[0];
+        }
         return {
         ...state,
-        winner: state.currentlyPlaying[0] || null,
+        winner: soleSurvivor || null,
+        currentlyPlaying: [],
+        eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
         events: [
             ...state.events,
             {
             type: "system",
-            message: ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + " is the sole survivor of Murder Island."),
+            message: ((soleSurvivor ? soleSurvivor.name : "No one") + " is the sole survivor of Murder Island."),
             }
         ]
         };

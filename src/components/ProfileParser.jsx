@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Flex, Container, Button, FileUpload, VStack, Alert, HStack } from "@chakra-ui/react"
 import { HiUpload } from "react-icons/hi"
+import { FaDownload } from "react-icons/fa";
+import { ExportProfiles } from "../ExportProfiles.js";
 
 function extractPlayers(data) {
     // Helper function to extract player info from JSON data, whether array (my preferred format) or an object
@@ -10,10 +12,11 @@ function extractPlayers(data) {
         return {
             id: Date.now() + Math.random() + index, // simple unique id
             name: obj.name || obj.contestant || `Player ${index + 1}`,
-            color: obj.color || null,
+            color: obj.color || "#FFFFFF",
             str: obj.str || obj.strStat || obj.physStat || 3,
             dex: obj.dex || obj.dexStat || 3,
             int: obj.int || obj.intStat || obj.stratStat || 3,
+            soc: obj.soc || obj.socStat || 3,
             // Sim-specific
             clues: obj.clues || null,
         };
@@ -71,6 +74,7 @@ const ProfileParser = ({ playerList, setPlayerList }) => {
                             <HiUpload /> Import Profiles (JSON)
                             </Button>
                         </FileUpload.Trigger>
+                <Button variant={'outline'} colorPalette={'blue'} size="sm" onClick={() => ExportProfiles(playerList)}><FaDownload /></Button>
                 <Button variant={'outline'} colorPalette={'red'} size="sm" onClick={() => setPlayerList([])}>Clear Players</Button>
                 </HStack>
                     <FileUpload.List />

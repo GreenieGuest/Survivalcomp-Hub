@@ -48,4 +48,46 @@ const SimulationSelector = ({ simulation, setSimulation }) => {
   )
 };
 
-export default SimulationSelector;
+const MetricSelector = ({ statMetric, setStatMetric }) => {
+
+    const metrics = createListCollection({
+        items: [
+            { label: "Wins", value: "wins", description: "Number of wins for each player."},
+            { label: "Average Placement", value: "avgPlacement", description: "Average placement for each player."},
+            { label: "Max Placement", value: "min", description: "Minimum placement for each player."},
+            { label: "Min Placement", value: "max", description: "Maximum placement for each player."},
+            { label: "Win Rate", value: "winRate", description: "Percentage of games won by each player."},
+        ],
+    })
+
+        return (
+        <Container mb={4} centerContent>
+            <Select.Root collection={metrics} onChange={(e) => setStatMetric(e.target.value)} size="sm" width="320px">
+                <Select.HiddenSelect />
+                <Select.Label>Sort by Metric</Select.Label>
+                <Select.Control>
+                <Select.Trigger>
+                    <Select.ValueText placeholder="Select Metric" />
+                </Select.Trigger>
+                <Select.IndicatorGroup>
+                    <Select.Indicator />
+                </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                <Select.Positioner>
+                    <Select.Content>
+                    {metrics.items.map((sim) => (
+                        <Select.Item item={sim} key={sim.value}>
+                            {sim.label}
+                        <Select.ItemIndicator />
+                        </Select.Item>
+                    ))}
+                    </Select.Content>
+                </Select.Positioner>
+                </Portal>
+            </Select.Root>
+        </Container>
+        )
+    };
+
+export { SimulationSelector, MetricSelector };

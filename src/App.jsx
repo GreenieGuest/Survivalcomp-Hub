@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react'
 import PlayerCard from "./components/PlayerCard.jsx";
 import ProfileParser from "./components/ProfileParser.jsx";
 import StillInTheRunning from "./components/StillInTheRunning.jsx";
-import SimulationSelector from "./components/SimulationSelector.jsx";
+import { SimulationSelector, MetricSelector } from "./components/Dropdowns.jsx";
 import PointsLeaderboard from "./components/PointsLeaderboard.jsx";
 import PlacementGains from "./components/PlacementGains.jsx";
-import StatsTable from "./components/StatsTable.jsx";
-import StatsChart from "./components/StatsChart.jsx";
+import { StatsTable, StatsChart } from "./components/StatsComponents.jsx";
 import EventLog from "./simulators/EventLog.jsx";
 import scLogo from "./assets/survivalcomp.png";
 
@@ -23,6 +22,7 @@ import { FaChartSimple } from "react-icons/fa6";
 import { FaGithub } from "react-icons/fa";
 import { LuExternalLink } from "react-icons/lu"
 import { FaFastForward } from "react-icons/fa";
+import { FaHome } from "react-icons/fa";
 import './App.css'
 
 function App() {
@@ -33,6 +33,8 @@ function App() {
   const [simulation, setSimulation] = useState(null);
   const [runningSim, setRunningSim] = useState(null); // running sim may be different if user messes around
   const [gameState, setGameState] = useState(null);
+  
+  const [statMetric, setStatMetric] = useState('avgPlacement');
 
   const simulations = { // Each function for each simulation
   br: { // Ban Roulette
@@ -143,8 +145,9 @@ function App() {
   , icon: <MdOutlinePeople /> },
   { value: "configuration", title: "Configuration", text: "To Be Implemented", icon: <GrConfigure /> },
   { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
-              <StatsTable playerStatsList={playerStats} />
-              <StatsChart playerStatsList={playerStats} />
+      <MetricSelector statMetric={statMetric} setStatMetric={setStatMetric} />
+      <StatsTable playerStatsList={playerStats} sortByMetric={statMetric} />
+      <StatsChart playerStatsList={playerStats} sortByMetric={statMetric} />
     </Container>, icon: <FaChartSimple /> },
   ]
 
@@ -199,9 +202,9 @@ function App() {
         <Button variant={'outline'} colorPalette={'yellow'} onClick={handleNextTurn} disabled={!gameState || gameState.winner}>Next Turn</Button>
         <Button variant={'outline'} colorPalette={'purple'} onClick={handleFastForward} disabled={!simulation}><FaFastForward /></Button>
       </Flex>
-              {gameState && <Tabs.Root lazyMount unmountOnExit defaultValue="tab-1" justify="center">
+              {gameState && <Tabs.Root lazyMount unmountOnExit defaultValue="tab-1" justify="center" size="sm" mt={5}>
             <Tabs.List>
-                <Tabs.Trigger value="tab-1">Description</Tabs.Trigger>
+                <Tabs.Trigger value="tab-1"><FaHome /></Tabs.Trigger>
                 <Tabs.Trigger value="tab-2">Still In The Running</Tabs.Trigger>
                 {gameState && gameState.points == false && <Tabs.Trigger value="tab-3">Elimination Order</Tabs.Trigger>}
                 {gameState && gameState.points == true && <Tabs.Trigger value="tab-4">Placements/Gains</Tabs.Trigger>}
