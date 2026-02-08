@@ -70,12 +70,12 @@ const ProfileParser = ({ playerList, setPlayerList }) => {
                     <FileUpload.HiddenInput />
                 <HStack>
                         <FileUpload.Trigger asChild>
-                            <Button variant="outline" colorPalette="teal" size="sm" alignSelf="center">
+                            <Button variant="outline" colorPalette="teal" size="xs" alignSelf="center">
                             <HiUpload /> Import Profiles (JSON)
                             </Button>
                         </FileUpload.Trigger>
-                <Button variant={'outline'} colorPalette={'blue'} size="sm" onClick={() => ExportProfiles(playerList)}><FaDownload /></Button>
-                <Button variant={'outline'} colorPalette={'red'} size="sm" onClick={() => setPlayerList([])}>Clear Players</Button>
+                <Button variant={'outline'} colorPalette={'blue'} size="xs" onClick={() => ExportProfiles(playerList)}><FaDownload /></Button>
+                <Button variant={'outline'} colorPalette={'red'} size="xs" onClick={() => setPlayerList([])}>Clear Players</Button>
                 </HStack>
                     <FileUpload.List />
                 </FileUpload.Root>

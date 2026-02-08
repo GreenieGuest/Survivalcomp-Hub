@@ -1,5 +1,12 @@
-import { Table } from "@chakra-ui/react"
+import { useState } from "react";
+import { Table, Container, createListCollection } from "@chakra-ui/react"
 import { suffix } from "../simulators/utils";
+import { MiscSelector } from "./Dropdowns.jsx";
+
+import { BarList, useChart } from "@chakra-ui/charts";
+
+import { Chart } from "@chakra-ui/charts"
+import { Bar, Cell, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, LabelList} from "recharts"
 
 function calculateChange(placement, lastPlacement) {
     if (placement < lastPlacement) {
@@ -70,5 +77,86 @@ const PointsLeaderboard = ({ playerList, eliminatedList }) => {
     )
 };
 
+const PointsChart = ({ playerList, eliminatedList }) => {
+    const lastEliminatedPlayer = eliminatedList[eliminatedList.length - 1];
 
-export default PointsLeaderboard;
+    var leaderboardPlayers = null;
+    if (lastEliminatedPlayer) {
+        leaderboardPlayers = [...playerList, lastEliminatedPlayer];
+    } else {
+        leaderboardPlayers = [...playerList];
+    }
+
+    if (playerList.length == 0 && eliminatedList.length == 0) {
+        return (
+        <p>No graph to display!</p>
+        )
+    }
+    
+
+    const items = leaderboardPlayers.map((player, index) => ({
+        id: (index + 1)+suffix(index + 1),
+        name: player.name,
+        points: player.points,
+        color: player.color,
+        lastPlacement: player.lastPlacement
+    }));
+
+      const chart = useChart({
+    data: items,
+    series: [
+      { name: "points", color: "yellow.solid", stackId: "a" },
+    ],
+  })
+
+    return (
+        <Container mt={4} centerContent>
+            <Chart.Root maxH="sm" chart={chart}>
+            <BarChart layout="vertical" data={chart.data}>
+                <CartesianGrid stroke={chart.color("border.muted")} vertical={false} horizontal={false} />
+                <XAxis type="number" hide/>
+                <Tooltip
+                cursor={{ fill: chart.color("bg.muted") }}
+                animationDuration={100}
+                content={
+                    <Chart.Tooltip
+                    labelFormatter={(_, payload) =>
+                        payload?.[0]?.payload?.name
+                    }
+                    />
+                }
+                />
+                <YAxis type="category" hide/>
+                <Bar isAnimationActive={true} dataKey="points">
+                    <LabelList dataKey="id" position="left" fill="gray"/>
+                    <LabelList dataKey="name" position="right" />
+                    <LabelList dataKey="points" position="insideRight" fill="black" />
+                    {chart.data.map((item, index) => (
+                        <Cell key={index} fill={item.color} />
+                    ))}
+                </Bar>
+            </BarChart>
+            </Chart.Root>
+        </Container>
+    )
+};
+
+const LeaderboardsDisplay = ({ playerList, eliminatedList }) => {
+    const [displayType, setDisplayType] = useState('table');
+
+    const displays = createListCollection({
+        items: [
+            { label: "Table", value: "table"},
+            { label: "Chart", value: "chart"},
+        ],
+    })
+
+    return (
+        <Container centerContent>
+            <MiscSelector options={displays} title="Display" state={displayType} setState={setDisplayType} />
+            {displayType === 'chart' ? <PointsChart playerList={playerList} eliminatedList={eliminatedList} /> : <PointsLeaderboard playerList={playerList} eliminatedList={eliminatedList} />}
+        </Container>
+    )
+}
+
+export { PointsLeaderboard, PointsChart, LeaderboardsDisplay };

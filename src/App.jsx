@@ -3,7 +3,7 @@ import PlayerCard from "./components/PlayerCard.jsx";
 import ProfileParser from "./components/ProfileParser.jsx";
 import StillInTheRunning from "./components/StillInTheRunning.jsx";
 import { SimulationSelector, MetricSelector } from "./components/Dropdowns.jsx";
-import PointsLeaderboard from "./components/PointsLeaderboard.jsx";
+import { LeaderboardsDisplay } from "./components/PointsLeaderboard.jsx";
 import PlacementGains from "./components/PlacementGains.jsx";
 import { StatsTable, StatsChart } from "./components/StatsComponents.jsx";
 import EventLog from "./simulators/EventLog.jsx";
@@ -95,24 +95,10 @@ function App() {
 
       newStats[player.id] = {
         ...prev,
+        wins: prev.wins + (gameState.castSize - index === 1 ? 1 : 0),
         placements: [...prev.placements, gameState.castSize - index],
       };
     });
-
-    if (gameState.winner) {
-      const winnerId = gameState.winner.id;
-      const prev = newStats[winnerId] ?? {
-        object: gameState.winner,
-        wins: 0,
-        placements: [],
-      };
-
-      newStats[winnerId] = {
-        ...prev,
-        placements: [...prev.placements, 1],
-        wins: prev.wins + 1,
-      };
-    }
     const sims = simCount + 1;
     setSimCount(sims);
 
@@ -231,7 +217,7 @@ function App() {
               <PlacementGains playerList={gameState.currentlyPlaying} lastEliminatedPlayer={gameState.eliminated[gameState.eliminated.length - 1]} />
             </Tabs.Content>
             <Tabs.Content value="tab-5">
-              <PointsLeaderboard playerList={gameState.currentlyPlaying} eliminatedList={gameState.eliminated} />
+              <LeaderboardsDisplay playerList={gameState.currentlyPlaying} eliminatedList={gameState.eliminated} />
             </Tabs.Content>
         </Tabs.Root>}
         

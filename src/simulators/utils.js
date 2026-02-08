@@ -36,3 +36,15 @@ export function average(arr) {
     const sum = arr.reduce((a, b) => a + b, 0);
     return sum / arr.length;
 }
+
+// For those annoying and elusive colors
+
+export function isColorHex(input) { // will be converted :)
+  const regex = /^#([0-9A-Fa-f]{6})$/;
+  return regex.test(input);
+}
+ 
+export function isColorRGBA(input) {
+  const regex = /^#([0-9A-Fa-f]{8})$/;
+  return regex.test(input);
+}

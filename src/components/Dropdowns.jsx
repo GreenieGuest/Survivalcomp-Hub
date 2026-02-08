@@ -49,6 +49,7 @@ const SimulationSelector = ({ simulation, setSimulation }) => {
 };
 
 const MetricSelector = ({ statMetric, setStatMetric }) => {
+    // separate because it will have sim-specific metrics later
 
     const metrics = createListCollection({
         items: [
@@ -90,4 +91,37 @@ const MetricSelector = ({ statMetric, setStatMetric }) => {
         )
     };
 
-export { SimulationSelector, MetricSelector };
+const MiscSelector = ({ options, title, state, setState }) => {
+  // Input will only accept options that have ALREADY GONE THROUGH createListCollection
+
+        return (
+        <Container mb={4} centerContent>
+            <Select.Root collection={options} onChange={(e) => setState(e.target.value)} size="sm" width="320px">
+                <Select.HiddenSelect />
+                <Select.Label>{title}</Select.Label>
+                <Select.Control>
+                <Select.Trigger>
+                    <Select.ValueText placeholder="Select Option" />
+                </Select.Trigger>
+                <Select.IndicatorGroup>
+                    <Select.Indicator />
+                </Select.IndicatorGroup>
+                </Select.Control>
+                <Portal>
+                <Select.Positioner>
+                    <Select.Content>
+                    {options.items.map((sim) => (
+                        <Select.Item item={sim} key={sim.value}>
+                            {sim.label}
+                        <Select.ItemIndicator />
+                        </Select.Item>
+                    ))}
+                    </Select.Content>
+                </Select.Positioner>
+                </Portal>
+            </Select.Root>
+        </Container>
+        )
+    };
+
+export { SimulationSelector, MetricSelector, MiscSelector };

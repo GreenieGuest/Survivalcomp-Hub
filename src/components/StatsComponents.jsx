@@ -2,7 +2,7 @@ import { Table, Container } from "@chakra-ui/react"
 import { suffix, average } from "../simulators/utils";
 
 import { Chart, useChart } from "@chakra-ui/charts"
-import { Bar, Cell, BarChart, CartesianGrid, XAxis, YAxis, LabelList, Legend, Tooltip } from "recharts"
+import { Bar, Cell, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
 
 const StatsTable = ({ playerStatsList, sortByMetric }) => {
     const items = Object.values(playerStatsList).map((player, index) => ({
