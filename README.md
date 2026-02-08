@@ -1,16 +1,43 @@
-# React + Vite
+# Survivalcomp Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web application designed for users to be able to simulate various competitions, and be able to collect and visualize the data from the results to analyze stats, average placements, etc.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Simulations**: Currently 3 basic simulations including Algicosathlon. Soon to be expanded.  
+- **Player Profiles**: Users are able to easily add for competitors, such as strength, intelligence, etc.  
+- **Import/Export**: Import existing profiles or export them for later use.  
+- **Data Visualization**: Analyze various stats from running simulations through tables and graphs displaying various metrics.
 
-## React Compiler
+## Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Follow these steps to set up the project locally on your machine.
 
-## Expanding the ESLint configuration
+### Prerequisites
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Ensure you have the following installed on your machine:
+- [Git](https://git-scm.com/)  
+- [Node.js](https://nodejs.org/en)
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/GreenieGuest/Survivalcomp-Hub
+cd SurvivalcompHub
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+### Running the Project
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser to view the application.
