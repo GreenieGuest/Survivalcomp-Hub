@@ -19,4 +19,4 @@ const AppHeader = () => {
         </>
     )
 }
-export { AppHeader };
+export default AppHeader;

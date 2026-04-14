@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import PlayerCard from "./components/PlayerCard.jsx";
 import ProfileParser from "./components/ProfileParser.jsx";
-import StillInTheRunning from "./components/StillInTheRunning.jsx";
 import { SimulationSelector, MetricSelector } from "./components/Dropdowns.jsx";
-import { AppHeader } from "./components/AppHeader.jsx";
-import { LeaderboardsDisplay } from "./components/PointsLeaderboard.jsx";
-import PlacementGains from "./components/PlacementGains.jsx";
+import AppHeader from "./components/AppHeader.jsx";
+import SimTabs from "./components/SimTabs.jsx";
+
 import { StatsTable, StatsChart } from "./components/StatsComponents.jsx";
 import EventLog from "./simulators/EventLog.jsx";
 
@@ -13,14 +12,13 @@ import { FF_BR, initialize_BR, banRoulette } from "./simulators/banroulette";
 import { FF_AS, initialize_AS, algicosathlon } from "./simulators/algicosathlon";
 import { FF_MI, initialize_MI, murderIsland } from "./simulators/murderisland";
 
-import {Accordion, Icon, Span, Text, Container, Flex, Heading, Button, VStack, Tabs} from "@chakra-ui/react";
+import {Accordion, Icon, Span, Container, Flex, Heading, Button} from "@chakra-ui/react";
 
 // Icons
 import { MdOutlinePeople } from "react-icons/md";
 import { GrConfigure } from "react-icons/gr";
 import { FaChartSimple } from "react-icons/fa6";
 import { FaFastForward } from "react-icons/fa";
-import { FaHome } from "react-icons/fa";
 import './App.css'
 
 function App() {
@@ -33,6 +31,8 @@ function App() {
   const [gameState, setGameState] = useState(null);
   
   const [statMetric, setStatMetric] = useState('avgPlacement');
+
+  console.log("Current gameState:", gameState); // Debug log to check gameState
 
   const simulations = { // Each function for each simulation
   br: { // Ban Roulette
@@ -177,38 +177,7 @@ function App() {
         <Button variant={'outline'} colorPalette={'yellow'} onClick={handleNextTurn} disabled={!gameState || gameState.winner}>Next Turn</Button>
         <Button variant={'outline'} colorPalette={'purple'} onClick={handleFastForward} disabled={!simulation}><FaFastForward /></Button>
       </Flex>
-              {gameState && <Tabs.Root lazyMount unmountOnExit defaultValue="tab-1" justify="center" size="sm" mt={5}>
-            <Tabs.List>
-                <Tabs.Trigger value="tab-1"><FaHome /></Tabs.Trigger>
-                <Tabs.Trigger value="tab-2">Still In The Running</Tabs.Trigger>
-                {gameState && gameState.points == false && <Tabs.Trigger value="tab-3">Elimination Order</Tabs.Trigger>}
-                {gameState && gameState.points == true && <Tabs.Trigger value="tab-4">Placements/Gains</Tabs.Trigger>}
-                {gameState && gameState.points == true && <Tabs.Trigger value="tab-5">Leaderboard</Tabs.Trigger>}
-            </Tabs.List>
-            <Tabs.Content value="tab-1">
-               <Container>
-                <Text>Day {gameState.turn}</Text>
-                </Container>
-            </Tabs.Content>
-            <Tabs.Content value="tab-2">
-              <StillInTheRunning playerList={gameState.currentlyPlaying} />
-            </Tabs.Content>
-            <Tabs.Content value="tab-3">
-                <VStack>
-                  {[...gameState.eliminated].reverse().map((player, index) => (
-                    <div key={player.id}>
-                      {gameState.currentlyPlaying.length + index + 1}. <span style={{color: player.color || "white"}}>{player.name}</span>
-                    </div>
-                  ))}
-                </VStack>
-            </Tabs.Content>
-            <Tabs.Content value="tab-4">
-              <PlacementGains playerList={gameState.currentlyPlaying} lastEliminatedPlayer={gameState.eliminated[gameState.eliminated.length - 1]} />
-            </Tabs.Content>
-            <Tabs.Content value="tab-5">
-              <LeaderboardsDisplay playerList={gameState.currentlyPlaying} eliminatedList={gameState.eliminated} />
-            </Tabs.Content>
-        </Tabs.Root>}
+        {gameState && <SimTabs gameState={gameState} />}
         
         {gameState && <Heading>Events</Heading>}
         {gameState && <EventLog events={gameState.events} />}
