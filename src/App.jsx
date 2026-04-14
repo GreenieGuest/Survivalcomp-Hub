@@ -4,6 +4,7 @@ import ProfileParser from "./components/ProfileParser.jsx";
 import { SimulationSelector, MetricSelector } from "./components/Dropdowns.jsx";
 import AppHeader from "./components/AppHeader.jsx";
 import SimTabs from "./components/SimTabs.jsx";
+import Config from "./components/Config.jsx";
 
 import { StatsTable, StatsChart } from "./components/StatsComponents.jsx";
 import EventLog from "./simulators/EventLog.jsx";
@@ -127,7 +128,7 @@ function App() {
               <PlayerCard playerList={playerList} setPlayerList={setPlayerList} />
   </Container>
   , icon: <MdOutlinePeople /> },
-  { value: "configuration", title: "Configuration", text: "To Be Implemented", icon: <GrConfigure /> },
+  { value: "configuration", title: "Configuration", text: <Config />, icon: <GrConfigure /> },
   { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
       <MetricSelector statMetric={statMetric} setStatMetric={setStatMetric} />
       <StatsTable playerStatsList={playerStats} sortByMetric={statMetric} />
