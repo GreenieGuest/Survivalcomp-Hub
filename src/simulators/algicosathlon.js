@@ -19,7 +19,28 @@ function elimination(athletes) {
     console.log(athletes);
     // find eliminated player
     athletes.sort((a, b) => getPoints(a) - getPoints(b));
-    let eliminated = athletes[0];
+
+    // check if there is a tie
+    let lowestScorer = athletes[0];
+    if (athletes.length > 1) {
+      let tiebreaker_group = athletes.filter(p => p.points === lowestScorer.points);
+
+      // run a tiebreaker challenge if there is a tie ( Duel mechanic for future BOTS )
+      while (tiebreaker_group.length > 1) {
+          console.log("Tiebreaker between " + tiebreaker_group.map(p => p.name).join(", ") + " with " + lowestScorer.points + " points.");
+          let challengeName = randomChoice(["Running (100yd)", "Discus Throw", "Archery", "PSaT", "BMX Cycling", "Obstacle Course", "Memory"]);
+
+          // Run the tiebreaker challenge
+          let [placements, scores] = challengeFFA(challengeName, tiebreaker_group);
+          var worst_score = Math.min(...scores);
+          // If a tie happened within the Duel/3Duel, do another tiebreaker with the contestants who got the worst score
+          tiebreaker_group = tiebreaker_group.filter((p, index) => scores[index] === worst_score);
+      }
+      var eliminated = tiebreaker_group[0];
+    } else {
+      var eliminated = lowestScorer;
+    }
+
     // sort by reverse for the leaderboard
     athletes.sort((a, b) => getPoints(b) - getPoints(a));
     
