@@ -1,7 +1,10 @@
 import { randomChoice, randomInt } from "./utils";
 
 export function initialize_MI(players) {
-  // initialize game: all players added, random barrel position, # players printed
+  // Function called by the interface to create a simulation by importing player profiles (and in the future, configuration settings).
+  // Contains fundamentals (turn, participants, winner)
+  // Returns a state that will be modified as the simulation goes on.
+  
   return {
     turn: 0,
     // Sim fundamentals
