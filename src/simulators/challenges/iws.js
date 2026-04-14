@@ -152,8 +152,6 @@ export function challenge(challenge, player) {
                 earnedPoints += rollPass(player.int, 6);
             }
             break;
-
-        // 64DITP Challenges, for when that day comes...
         default: // default to luck
             earnedPoints = randomInt(1, 20);
     }
