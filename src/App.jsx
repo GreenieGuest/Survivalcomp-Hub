@@ -3,6 +3,7 @@ import PlayerCard from "./components/PlayerCard.jsx";
 import ProfileParser from "./components/ProfileParser.jsx";
 import StillInTheRunning from "./components/StillInTheRunning.jsx";
 import { SimulationSelector, MetricSelector } from "./components/Dropdowns.jsx";
+import { AppHeader } from "./components/AppHeader.jsx";
 import { LeaderboardsDisplay } from "./components/PointsLeaderboard.jsx";
 import PlacementGains from "./components/PlacementGains.jsx";
 import { StatsTable, StatsChart } from "./components/StatsComponents.jsx";
