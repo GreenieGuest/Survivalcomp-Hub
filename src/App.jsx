@@ -151,7 +151,7 @@ function App() {
 
   return (
     <Container pt={5} width={'auto'}>
-      <Header></Header>
+      <AppHeader />
       <Accordion.Root pb={5} lazyMount unmountOnExit collapsible>
         {items.map((item, index) => (
           <Accordion.Item key={index} value={item.value}>

@@ -173,14 +173,25 @@ export function algicosathlon(state) {
       state.challenges.push(challengeName);
   // }
 
+  // Placements: Players sorted by score, value is their ID
+  // Scores: Players sorted by ID, value is their score
 	let [placements, scores] = challengeFFA(challengeName, state.currentlyPlaying);
 
+  let runningTiedPlacement = 0; // for handling ties in placements (if 1st and 2nd are tied, they should both get 1st place points, etc.)
   for (let x = 0; x < placements.length; x++) {
-    state.currentlyPlaying[placements[x]].points += Math.ceil(base_points[x] * Math.pow(rate_of_change, state.turn));
+    let placement = x;
+    let playerScore = scores[x];
+    // HOLD IT! If the 1st and 2nd placers are tied, they should get the same points and placement. Same for 2nd and 3rd.
+    // Walk back to find the first player in the tie group
+    while (placement > 0 && scores[[placement - 1]] === playerScore) {
+      placement--;
+    }
+
+    state.currentlyPlaying[placements[x]].points += Math.ceil(base_points[placement] * Math.pow(rate_of_change, state.turn));
     state.currentlyPlaying[placements[x]].score = scores[x]; // 1 is best, etc.
-    state.currentlyPlaying[placements[x]].gains = Math.ceil(base_points[x] * Math.pow(rate_of_change, state.turn));
+    state.currentlyPlaying[placements[x]].gains = Math.ceil(base_points[placement] * Math.pow(rate_of_change, state.turn));
     // Log each player's points this round
-    console.log(`${state.currentlyPlaying[placements[x]].name} placed ${x + 1} and earned ${Math.ceil(base_points[x])} * ${Math.pow(rate_of_change, state.turn)} points, for a total of ${state.currentlyPlaying[placements[x]].points} points.`);
+    console.log(`${state.currentlyPlaying[placements[x]].name} placed ${x + 1} and earned ${Math.ceil(base_points[placement])} * ${Math.pow(rate_of_change, state.turn)} points, for a total of ${state.currentlyPlaying[placements[x]].points} points.`);
   }
   console.log(state.currentlyPlaying);
 
