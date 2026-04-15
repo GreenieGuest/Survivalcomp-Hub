@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Container, Text, VStack, createListCollection, Tabs, Button } from "@chakra-ui/react";
+import { Separator, HStack, Text, createListCollection, Button, NumberInput } from "@chakra-ui/react";
 import { MiscSelector } from "./Dropdowns.jsx";
-import { LeaderboardsDisplay } from "./PointsLeaderboard.jsx";
-import PlacementGains from "./PlacementGains.jsx";
-import { FaHome } from "react-icons/fa";
 
 const Config = ({ config, setConfig }) => {
     const [challengeModus, setChallengeModus] = useState("default");
@@ -20,21 +17,42 @@ const Config = ({ config, setConfig }) => {
             challenges: ["Luck"]},
     ],
     })
+    const [pointDiff, setPointDiff] = useState("linear");
+    const pdOptions = createListCollection({
+    items: [
+        { label: "Linear", value: "linear"},
+        { label: "Exponential", value: "expo"},
+    ],
+    })
+    const [rateOfChange, setRateOfChange] = useState(String(1.5)); // Chakra number constraint
 
     return (
         <>
+            <HStack>
+                <Text flexShrink="0">Universal</Text>
+                <Separator flex="1" />
+            </HStack>
             <MiscSelector options={challengeModuses} title="Challenge Modus" state={challengeModus} setState={setChallengeModus} />
-            <VStack>
-            <Text>Selected Challenges:</Text>
-            {challengeModuses.items.find((item) => item.value === challengeModus)?.challenges.map((challenge, index) => (
-                <Text key={index}>{challenge}</Text>
-            ))}
-            </VStack>
-
+            <HStack>
+                <Text flexShrink="0">Algicosathlon-specific</Text>
+                <Separator flex="1" />
+            </HStack>
+            <MiscSelector options={pdOptions} title="Points Distribution" state={pointDiff} setState={setPointDiff} />
+            <HStack justify="center">
+            <Text fontSize="xs" color="red.400">Rate of Change</Text>
+            <NumberInput.Root width="100px" defaultValue={'1.5'} step={0.05} onValueChange={(details) => setRateOfChange(details.value)} colorPalette={"red"}>
+                <NumberInput.Control />
+                <NumberInput.Input />
+            </NumberInput.Root>
+            </HStack>
+            <Separator />
             <Button variant="outline" onClick={() => setConfig({
+                ...config,
                 challenges: challengeModuses.items.find((item) => item.value === challengeModus)?.challenges,
+                pointDistribution: pointDiff,
+                rateOfChange: rateOfChange,
             })}>
-                set Configuration
+                Update Configuration
             </Button>
         </>
     )
