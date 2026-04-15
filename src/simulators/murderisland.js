@@ -6,7 +6,7 @@ const clues = ["Black","Blonde","Brunette","Ginger",
     "Card","Paper","Phone"
 ]
 
-export function initialize_MI(players) {
+export function initialize_MI(players, config) {
   // initialize game: all players added, random barrel position, # players printed
   const playerProfiles = players.map(p => (
         {...p,
@@ -26,6 +26,7 @@ export function initialize_MI(players) {
     teams: false,
     // Game fundamentals
     castSize: players.length,
+    config: config,
     winner: null,
     currentlyPlaying: playerProfiles,
     eliminated: [],
@@ -41,12 +42,12 @@ export function initialize_MI(players) {
   };
 }
 
-export function FF_MI(state, playerList) { // repeat murderIsland until winner
+export function FF_MI(state, playerList, config) { // repeat murderIsland until winner
   if (!state || state.winner) {
     if (playerList.length === 0) {
       return state; // prevent game breaking
     }
-    state = initialize_MI(playerList);
+    state = initialize_MI(playerList, config);
   }
   let nextState = state;
   while (!nextState.winner) {

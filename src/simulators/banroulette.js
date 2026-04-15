@@ -1,6 +1,6 @@
 import { randomChoice, randomInt } from "./utils";
 
-export function initialize_BR(players) {
+export function initialize_BR(players, config) {
   // initialize game: all players added, random barrel position, # players printed
   return {
     turn: 0,
@@ -8,6 +8,7 @@ export function initialize_BR(players) {
     points: false,
     teams: false,
     castSize: players.length,
+    config: config,
     barrel: randomInt(1,6),
     chance: 1,
     winner: null,
@@ -22,12 +23,12 @@ export function initialize_BR(players) {
   };
 }
 
-export function FF_BR(state, playerList) { // repeat banRoulette until winner
+export function FF_BR(state, playerList, config) { // repeat banRoulette until winner
   if (!state || state.winner) {
     if (playerList.length === 0) {
       return state; // prevent game breaking
     }
-    state = initialize_BR(playerList);
+    state = initialize_BR(playerList, config);
   }
   let nextState = state;
   while (!nextState.winner) {

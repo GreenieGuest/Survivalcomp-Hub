@@ -80,12 +80,12 @@ function challengeFFA(challengeName, athletes) {
     return [placements, results];
 }
 
-export function FF_AS(state, playerList) { // repeat until winner
+export function FF_AS(state, playerList, config) { // repeat until winner
   if (!state || state.winner) {
     if (playerList.length === 0) {
       return state; // prevent game breaking
     }
-    state = initialize_AS(playerList);
+    state = initialize_AS(playerList, config);
   }
   let nextState = state;
   while (!nextState.winner) {
@@ -97,7 +97,7 @@ export function FF_AS(state, playerList) { // repeat until winner
   return nextState;
 }
 
-export function initialize_AS(players) {
+export function initialize_AS(players, config) {
   // initialize game: all players added, random barrel position, # players printed
   return {
     turn: 0,
@@ -106,6 +106,7 @@ export function initialize_AS(players) {
     teams: false,
     // Game fundamentals
     castSize: players.length,
+    config: config,
     winner: null,
     base_points: getBasePoints(players.length),
     rate_of_change: 1.5,
