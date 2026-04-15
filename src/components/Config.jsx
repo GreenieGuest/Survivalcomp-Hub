@@ -17,7 +17,7 @@ const Config = ({ config, setConfig }) => {
             challenges: ["Luck"]},
     ],
     })
-    const [pointDiff, setPointDiff] = useState("linear");
+    const [pointDiff, setPointDiff] = useState("expo");
     const pdOptions = createListCollection({
     items: [
         { label: "Linear", value: "linear"},
