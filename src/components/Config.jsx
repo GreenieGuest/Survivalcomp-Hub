@@ -39,8 +39,8 @@ const Config = ({ config, setConfig }) => {
             </HStack>
             <MiscSelector options={pdOptions} title="Points Distribution" state={pointDiff} setState={setPointDiff} />
             <HStack justify="center">
-            <Text fontSize="xs" color="red.400">Rate of Change</Text>
-            <NumberInput.Root width="100px" defaultValue={'1.5'} step={0.05} onValueChange={(details) => setRateOfChange(details.value)} colorPalette={"red"}>
+            <Text>Rate of Change</Text>
+            <NumberInput.Root width="100px" defaultValue={'1.5'} step={0.05} onValueChange={(details) => setRateOfChange(details.value)}>
                 <NumberInput.Control />
                 <NumberInput.Input />
             </NumberInput.Root>

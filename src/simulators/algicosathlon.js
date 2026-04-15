@@ -1,9 +1,17 @@
 import { randomChoice } from "./utils";
 import { challenge } from "./modules";
 
-function getBasePoints(numPlayers) {
+function getBasePoints(numPlayers, distribution) {
   // returns an array of base points for players based on number of players
   const basePoints = [];
+
+  if (distribution === "linear") {
+    for (let i = 0; i < numPlayers; i++) {
+      basePoints.push(numPlayers - i); // 1st place gets numPlayers points, 2nd gets numPlayers - 1, etc.
+    }
+    return basePoints;
+  }
+  // otherwise do exponential method (most algicosathlons do this)
   const maxValue = 100
   const minValue = 1 // to be configured later
 
@@ -108,8 +116,7 @@ export function initialize_AS(players, config) {
     castSize: players.length,
     config: config,
     winner: null,
-    base_points: getBasePoints(players.length),
-    rate_of_change: 1.5,
+    base_points: getBasePoints(players.length, config.pointDistribution),
     //Give each player a new points property
     // lastPlacement is for the leaderboard arrows
     // score and gains are for algicosathlon nerds and purists
@@ -160,7 +167,7 @@ export function algicosathlon(state) {
   }
 
   let base_points = state.base_points;
-  let rate_of_change = state.rate_of_change;
+  let rate_of_change = state.config.rateOfChange;
 
   console.log("Base Points this round: " + base_points);
 
