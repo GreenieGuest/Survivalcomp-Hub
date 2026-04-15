@@ -22,6 +22,8 @@ import { FaChartSimple } from "react-icons/fa6";
 import { FaFastForward } from "react-icons/fa";
 import './App.css'
 
+import default_config from "./constants/defaultConfig.js";
+
 function App() {
   const [playerList, setPlayerList] = useState([]);
   const [playerStats, setPlayerStats] = useState({}); // Future use for storing player stats across simulations
@@ -30,7 +32,7 @@ function App() {
   const [simulation, setSimulation] = useState(null);
   const [runningSim, setRunningSim] = useState(null); // running sim may be different if user messes around
   const [gameState, setGameState] = useState(null);
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState(default_config);
   
   const [statMetric, setStatMetric] = useState('avgPlacement');
 
