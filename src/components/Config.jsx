@@ -3,7 +3,12 @@ import { Separator, HStack, Text, createListCollection, Button, NumberInput } fr
 import { MiscSelector } from "./Dropdowns.jsx";
 
 const Config = ({ config, setConfig }) => {
+    // Universal
     const [challengeModus, setChallengeModus] = useState("default");
+    // Algicosathlon-specific
+    const [pointDiff, setPointDiff] = useState("expo");
+    const [rateOfChange, setRateOfChange] = useState(String(1.5)); // Chakra number constraint
+
     const challengeModuses = createListCollection({
     items: [
         { label: "Generic", value: "default",
@@ -17,14 +22,12 @@ const Config = ({ config, setConfig }) => {
             challenges: ["Luck"]},
     ],
     })
-    const [pointDiff, setPointDiff] = useState("expo");
     const pdOptions = createListCollection({
     items: [
         { label: "Linear", value: "linear"},
         { label: "Exponential", value: "expo"},
     ],
     })
-    const [rateOfChange, setRateOfChange] = useState(String(1.5)); // Chakra number constraint
 
     return (
         <>
@@ -45,8 +48,11 @@ const Config = ({ config, setConfig }) => {
                 <NumberInput.Input />
             </NumberInput.Root>
             </HStack>
-            <Separator />
-            <Button variant="outline" onClick={() => setConfig({
+            <HStack>
+                <Text flexShrink="0">Confirm</Text>
+                <Separator flex="1" />
+            </HStack>
+            <Button variant="outline" colorPalette="green" onClick={() => setConfig({
                 ...config,
                 challenges: challengeModuses.items.find((item) => item.value === challengeModus)?.challenges,
                 pointDistribution: pointDiff,
