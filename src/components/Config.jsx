@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Container, Text, VStack, createListCollection, Tabs } from "@chakra-ui/react";
+import { Container, Text, VStack, createListCollection, Tabs, Button } from "@chakra-ui/react";
 import { MiscSelector } from "./Dropdowns.jsx";
 import { LeaderboardsDisplay } from "./PointsLeaderboard.jsx";
 import PlacementGains from "./PlacementGains.jsx";
 import { FaHome } from "react-icons/fa";
 
-const Config = () => {
+const Config = ({ config, setConfig }) => {
     const [challengeModus, setChallengeModus] = useState("default");
     const challengeModuses = createListCollection({
     items: [
@@ -30,6 +30,12 @@ const Config = () => {
                 <Text key={index}>{challenge}</Text>
             ))}
             </VStack>
+
+            <Button variant="outline" onClick={() => setConfig({
+                challenges: challengeModuses.items.find((item) => item.value === challengeModus)?.challenges,
+            })}>
+                set Configuration
+            </Button>
         </>
     )
 }

@@ -30,6 +30,7 @@ function App() {
   const [simulation, setSimulation] = useState(null);
   const [runningSim, setRunningSim] = useState(null); // running sim may be different if user messes around
   const [gameState, setGameState] = useState(null);
+  const [config, setConfig] = useState(null);
   
   const [statMetric, setStatMetric] = useState('avgPlacement');
 
@@ -62,7 +63,7 @@ function App() {
     if (!sim) return;
 
     setRunningSim(simulation);
-    setGameState(sim.initialize(playerList));
+    setGameState(sim.initialize(playerList, config));
   };
 
   //Handles next turn based on running simulation
@@ -78,7 +79,7 @@ function App() {
     const sim = simulations[simulation];
     if (!sim) return;
 
-    setGameState(sim.fastForward(gameState, playerList));
+    setGameState(sim.fastForward(gameState, playerList, config));
   };
 
   function applyGameResults(prevStats) {
@@ -128,7 +129,7 @@ function App() {
               <PlayerCard playerList={playerList} setPlayerList={setPlayerList} />
   </Container>
   , icon: <MdOutlinePeople /> },
-  { value: "configuration", title: "Configuration", text: <Config />, icon: <GrConfigure /> },
+  { value: "configuration", title: "Configuration", text: <Config config={config} setConfig={setConfig} />, icon: <GrConfigure /> },
   { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
       <MetricSelector statMetric={statMetric} setStatMetric={setStatMetric} />
       <StatsTable playerStatsList={playerStats} sortByMetric={statMetric} />

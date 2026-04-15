@@ -166,10 +166,7 @@ export function algicosathlon(state) {
 
   // Select a challenge
   let challengeName;
-      const challengeTypes = ["Running (100yd)", "Discus Throw", "Archery", "PSaT", "BMX Cycling", "Obstacle Course",
-        "Ninja Takedown", "The Ultimate Test of Your Sheer Willpower", "Maxing", "The FitnessGram Pacer Test",
-        "The ASCI Spelling Bee", "Pole Vault", "Juggling", "Robot Takedown", "Mechanical Bull", "Shot Put",
-        "Dogfighting", "Triathalon", "Beat the AI"];
+      const challengeTypes = state.config.challenges;
       challengeName = randomChoice(challengeTypes);
       state.challenges.push(challengeName);
   // }
