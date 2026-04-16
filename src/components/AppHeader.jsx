@@ -7,7 +7,7 @@ const AppHeader = () => {
     return (
         <>
             <Flex justifyContent={'center'} alignItems={'center'} gap={3} flexWrap={'wrap'}>
-            <Heading fontSize={'4xl'} padding="5px" color={'green'}>Survivalcomp Hub</Heading>
+            <Heading fontFamily={"Arial"} fontStyle={"italic"} fontSize={'4xl'} padding="5px" color={'teal'}>Survivalcomp Hub</Heading>
             <Image src={scLogo} height="50px" className="logo" alt="Survivalcomp logo" />
             </Flex>
             <Text>A web app dedicated to the simulation of various survival competitions.</Text>
