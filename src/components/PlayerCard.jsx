@@ -2,6 +2,7 @@ import { useState } from "react";
 import {Button, Input, Container, ColorPicker, parseColor, Portal, HStack, Group, Alert, VStack, Box} from "@chakra-ui/react";
 import { FaTrash } from "react-icons/fa";
 import { StatsCell } from "./StatsPopup.jsx";
+import default_player from "../constants/defaultPlayer.js";
 
 export default function PlayerCard({ playerList, setPlayerList }) {
     const [name, setName] = useState("");
@@ -16,12 +17,10 @@ export default function PlayerCard({ playerList, setPlayerList }) {
             //More stats will be added later
 
             const newPlayer = {
+                ...default_player,
                 id: Date.now(),
                 name: name,
                 color: color.toString('hexa'),
-                str: 3,
-                dex: 3,
-                int: 3,
             };
             const updatedPlayerList = [...playerList, newPlayer];
             setPlayerList(updatedPlayerList);
