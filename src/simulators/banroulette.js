@@ -18,7 +18,7 @@ export function initialize_BR(players, config) {
       {
         type: "system",
         message: "Game started with " + players.length + " players."
-      }
+      },
     ]
   };
 }
