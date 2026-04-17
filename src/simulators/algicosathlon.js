@@ -23,7 +23,7 @@ function getBasePoints(numPlayers, distribution) {
   return basePoints;
 }
 
-function elimination(athletes) {
+function elimination(athletes, challengeName) {
     console.log(athletes);
     // find eliminated player
     athletes.sort((a, b) => getPoints(a) - getPoints(b));
@@ -36,7 +36,6 @@ function elimination(athletes) {
       // run a tiebreaker challenge if there is a tie ( Duel mechanic for future BOTS )
       while (tiebreaker_group.length > 1) {
           console.log("Tiebreaker between " + tiebreaker_group.map(p => p.name).join(", ") + " with " + lowestScorer.points + " points.");
-          let challengeName = randomChoice(["Running (100yd)", "Discus Throw", "Archery", "PSaT", "BMX Cycling", "Obstacle Course", "Memory"]);
 
           // Run the tiebreaker challenge
           let [placements, scores] = challengeFFA(challengeName, tiebreaker_group);
@@ -204,7 +203,7 @@ export function algicosathlon(state) {
   state.currentlyPlaying.forEach((player, index) => {
     player.lastPlacement = index;
   });
-  const chosen = elimination(state.currentlyPlaying);
+  const chosen = elimination(state.currentlyPlaying, challengeName);
   console.log("This should only run once");
 
     return {
