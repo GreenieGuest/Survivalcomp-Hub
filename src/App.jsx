@@ -12,6 +12,7 @@ import EventLog from "./simulators/EventLog.jsx";
 import { FF_BR, initialize_BR, banRoulette } from "./simulators/banroulette";
 import { FF_AS, initialize_AS, algicosathlon } from "./simulators/algicosathlon";
 import { FF_MI, initialize_MI, murderIsland } from "./simulators/murderisland";
+import { FF_SV, initialize_SV, survivor } from "./simulators/64ditp";
 
 import {Accordion, Icon, Span, Container, Flex, Heading, Button} from "@chakra-ui/react";
 
@@ -54,8 +55,12 @@ function App() {
     nextTurn: murderIsland,
     fastForward: FF_MI,
   },
+  sv: { // Primitive Survivor
+    initialize: initialize_SV,
+    nextTurn: survivor,
+    fastForward: FF_SV,
+  },
   // Board Game Insanity
-  // Survivor
   // etc
 };
 

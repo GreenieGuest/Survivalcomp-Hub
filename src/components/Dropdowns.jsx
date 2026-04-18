@@ -2,6 +2,7 @@ import { Container, Portal, Select, createListCollection, Stack, Span } from "@c
 import { FaGun } from "react-icons/fa6";
 import { MdOutlineLeaderboard } from "react-icons/md";
 import { RiKnifeBloodLine } from "react-icons/ri";
+import { GiSoccerBall } from "react-icons/gi";
 
 const SimulationSelector = ({ simulation, setSimulation }) => {
 
@@ -10,6 +11,7 @@ const SimulationSelector = ({ simulation, setSimulation }) => {
       { label: "Ban Roulette", value: "br", description: "Every round, one random player has a limited chance of remaining in the game, otherwise they are banned.", icon: <FaGun /> },
       { label: "Algicosathlon", value: "as", description: "Athletes compete in challenges for points. The competitor with the least points is eliminated each round.", icon: <MdOutlineLeaderboard /> },
       { label: "Murder Island", value: "mi", description: "Players are randomly assigned clues. One player is chosen to be the murderer, and another is chosen to be the victim. Players vote on who they think the murderer is. The player with the most votes is executed.", icon: <RiKnifeBloodLine /> },
+      { label: "survivor test", value: "sv", description: "teams and vote out", icon: <GiSoccerBall /> },
     ],
   })
 
