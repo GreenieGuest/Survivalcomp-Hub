@@ -118,6 +118,29 @@ export function FF_SV(state, playerList, config) { // repeat teams vote game unt
 }
 
 export function survivor(state) {
+  if (state.currentlyPlaying.length <= 1) {
+    var soleSurvivor = null;
+    if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
+      soleSurvivor = state.eliminated[state.eliminated.length - 1]; // last eliminated player wins by default
+    } else {
+      soleSurvivor = state.currentlyPlaying[0];
+    }
+    return {
+      ...state,
+      winner: soleSurvivor || null,
+      currentlyPlaying: [],
+      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
+      events: [
+        ...state.events,
+        {
+          type: "system",
+          message: "Winner: " + ((soleSurvivor ? soleSurvivor.name : "No one") + "! Press 'Start Game' to simulate again"),
+        }
+      ]
+    };
+  }
+
+  
   // Swap conditions
   if (state.currentlyPlaying.length == state.castSize) { // First assignment
     let shuffledPlayers = [...state.currentlyPlaying].sort(() => 0.5 - Math.random());
@@ -128,20 +151,6 @@ export function survivor(state) {
     state.quarter = 'M';
     // teams are no longer relevant
     console.log("Merge");
-  }
-
-  if (state.currentlyPlaying.length <= 1) {
-    return {
-      ...state,
-      winner: state.currentlyPlaying[0] || null,
-      events: [
-        ...state.events,
-        {
-          type: "system",
-          message: ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + " is the sole survivor of Murder Island."),
-        }
-      ]
-    };
   }
 
   console.log(state.teams);
@@ -163,6 +172,9 @@ export function survivor(state) {
       ...state,
       turn: state.turn + 1,
       currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
+      teams: state.teams.map(team =>
+        team.filter(p => p.id !== chosen.id)
+      ),
       eliminated: [...state.eliminated, chosen], // add to banned players
       events: [
         ...state.events,
@@ -172,16 +184,13 @@ export function survivor(state) {
   } else {
     let [placements, scores] = challengeFFA(challengeName, state.currentlyPlaying);
     console.log("Scores for each player: ", scores);
-    console.log(currentlyPlaying[placements[0]], " wins immunity");
-    const chosen = elimination(state.currentlyPlaying.filter(p => p.id !== currentlyPlaying[placements[0]].id));
+    console.log(state.currentlyPlaying[placements[0]], " wins immunity");
+    const chosen = elimination(state.currentlyPlaying.filter(p => p.id !== state.currentlyPlaying[placements[0]].id));
 
     return {
       ...state,
       turn: state.turn + 1,
       currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
-      teams: state.teams.map(team =>
-        team.filter(p => p.id !== chosen.id)
-      ),
       eliminated: [...state.eliminated, chosen], // add to banned players
       events: [
         ...state.events,
