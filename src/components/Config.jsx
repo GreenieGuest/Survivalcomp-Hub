@@ -8,6 +8,8 @@ const Config = ({ config, setConfig }) => {
     // Algicosathlon-specific
     const [pointDiff, setPointDiff] = useState("expo");
     const [rateOfChange, setRateOfChange] = useState(String(1.5)); // Chakra number constraint
+    const [startingTeams, setStartingTeams] = useState(String(2)); // Chakra number constraint
+    const [teamInfo, setTeamInfo] = useState([]);
 
     const challengeModuses = createListCollection({
     items: [
@@ -37,16 +39,28 @@ const Config = ({ config, setConfig }) => {
             </HStack>
             <MiscSelector options={challengeModuses} title="Challenge Modus" state={challengeModus} setState={setChallengeModus} />
             <HStack>
-                <Text flexShrink="0">Algicosathlon-specific</Text>
+                <Text flexShrink="0">Points-specific</Text>
                 <Separator flex="1" />
             </HStack>
             <MiscSelector options={pdOptions} title="Points Distribution" state={pointDiff} setState={setPointDiff} />
             <HStack justify="center">
-            <Text>Rate of Change</Text>
-            <NumberInput.Root width="100px" defaultValue={'1.5'} step={0.05} onValueChange={(details) => setRateOfChange(details.value)}>
-                <NumberInput.Control />
-                <NumberInput.Input />
-            </NumberInput.Root>
+                <Text>Rate of Change</Text>
+                <NumberInput.Root width="100px" defaultValue={'1.5'} step={0.05} onValueChange={(details) => setRateOfChange(details.value)}>
+                    <NumberInput.Control />
+                    <NumberInput.Input />
+                </NumberInput.Root>
+            </HStack>
+            <HStack>
+                <Text flexShrink="0">Teams-specific</Text>
+                <Separator flex="1" />
+            </HStack>
+            <MiscSelector options={pdOptions} title="Points Distribution" state={pointDiff} setState={setPointDiff} />
+            <HStack justify="center">
+                <Text>Starting Teams</Text>
+                <NumberInput.Root width="100px" defaultValue={'2'} step={1} onValueChange={(details) => setStartingTeams(details.value)}>
+                    <NumberInput.Control />
+                    <NumberInput.Input />
+                </NumberInput.Root>
             </HStack>
             <HStack>
                 <Text flexShrink="0">Confirm</Text>
@@ -57,6 +71,7 @@ const Config = ({ config, setConfig }) => {
                 challenges: challengeModuses.items.find((item) => item.value === challengeModus)?.challenges,
                 pointDistribution: pointDiff,
                 rateOfChange: rateOfChange,
+                startingTeams: startingTeams,
             })}>
                 Update Configuration
             </Button>

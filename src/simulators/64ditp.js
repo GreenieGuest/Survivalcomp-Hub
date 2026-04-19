@@ -18,19 +18,23 @@ function assignTeams(players, numTeams) {
   let playerPool = [...players];
   let newTeams = [];
 
-  const teamSize = players.length / numTeams;
+  const teamSize = Math.floor(players.length / numTeams);
+
+  console.log(players.length, numTeams, teamSize);
 
   // split the cast evenly and update the remaining pool each time
   for (let i = 0; i < numTeams - 1; i++) {
     const sample = randomSample(playerPool, teamSize);
+    if (sample.length === 0) break;
 
     // remove sampled players by id
     const sampleIds = new Set(sample.map(p => p.id));
     playerPool = playerPool.filter(p => !sampleIds.has(p.id));
-    newTeams.push(sample);
+    if (sample.length > 0) {newTeams.push(sample)}
   }
-  newTeams.push(playerPool); // push the rest
+  if (playerPool.length > 0) {newTeams.push(playerPool)} // push the rest
 
+  console.log(newTeams);
   return newTeams;
 }
 
@@ -89,13 +93,13 @@ function finale(state) {
 }
 
 function updatePhase(state) {
-  let { currentlyPlaying, castSize, quarter, teams } = state;
+  let { currentlyPlaying, castSize, quarter, startingTeams, teams } = state;
 
   // Initial team assignment
   if (currentlyPlaying.length === castSize) {
     return {
       ...state,
-      teams: assignTeams(currentlyPlaying, 3),
+      teams: assignTeams(currentlyPlaying, +state.config.startingTeams),
       quarter: PHASES.THREE_TEAMS
     };
   }
@@ -105,7 +109,7 @@ function updatePhase(state) {
     console.log("An Swap is occured!");
     return {
       ...state,
-      teams: assignTeams(teams.flat(), 2),
+      teams: assignTeams(teams.flat(), teams.length - 1),
       quarter: PHASES.TWO_TEAMS
     };
   }
@@ -140,9 +144,14 @@ function teamRound(state, challengeName) {
   const [placements, scores] = getChallengeResults(challengeName, state.teams);
 
   const losingTeamIndex = placements.at(-1);
+  console.log(losingTeamIndex)
+  console.log(state.teams)
   const losingTeam = state.teams[losingTeamIndex];
 
+  console.log(losingTeam, "lost")
+
   const eliminatedPlayer = elimination(losingTeam);
+  console.log(eliminatedPlayer, "is eliminated")
 
   return {
     ...state,
@@ -155,7 +164,7 @@ function teamRound(state, challengeName) {
     eliminated: [...state.eliminated, eliminatedPlayer],
     events: [
       ...state.events,
-      [state.teamNames[losingTeamIndex], " lost the challenge. ", eliminatedPlayer, " was voted out"]
+      [state.teamInfo[losingTeamIndex], " lost the challenge. ", eliminatedPlayer, " was voted out"]
     ]
   };
 }
@@ -184,6 +193,13 @@ export function initialize_SV(players, config) {
   // Contains fundamentals (turn, participants, winner)
   // Returns a state that will be modified as the simulation goes on.
   
+  const startingTeams = Array.from({ length: config.startingTeams }, (_, i) =>
+    config.teamInfo?.[i] ? {...config.teamInfo[i]} : {
+      name: `Team ${i+1}`,
+      color: "#FFFFFF"
+    }
+  );
+  
   return {
     turn: 0,
     // Sim fundamentals
@@ -199,9 +215,8 @@ export function initialize_SV(players, config) {
       idols: []
     })),
     // team data
-    teams: [[],[],[]],
-    teamNames: ["Red Drums","Blue Jays","Green Giants"],
-    teamColors: ["#FF0000", "#0000FF","#00FF00"],
+    teams: [],
+    teamInfo: startingTeams,
 
     eliminated: [],
     challenges: [], // For the Ultimate Showdown

@@ -5,7 +5,7 @@ const GameInfo = ({ state }) => {
         <Container>
             {state.teams.map((team, index) => (
                 <Box>
-                    <Heading color={state.teamColors[index]}>{state.teamNames[index]}</Heading>
+                    <Heading color={state.teamInfo[index].color}>{state.teamInfo[index].name}</Heading>
                     <Wrap gap="5px" justify="center">
                         {team.map((player, index) => (
                         <WrapItem key={index}>
