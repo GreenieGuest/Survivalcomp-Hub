@@ -95,13 +95,24 @@ function updatePhase(state) {
   if (currentlyPlaying.length === castSize) {
     return {
       ...state,
-      teams: assignTeams(currentlyPlaying, 2),
+      teams: assignTeams(currentlyPlaying, 3),
+      quarter: PHASES.THREE_TEAMS
+    };
+  }
+
+  // Swap condition
+  if (Math.min(...teams.map(a => a.length)) === 1) {
+    console.log("An Swap is occured!");
+    return {
+      ...state,
+      teams: assignTeams(teams.flat(), 2),
       quarter: PHASES.TWO_TEAMS
     };
   }
 
   // Merge condition
   if (currentlyPlaying.length === Math.floor(castSize / 2)) {
+    console.log("An Merge is occured!");
     return {
       ...state,
       quarter: PHASES.MERGE
@@ -188,9 +199,9 @@ export function initialize_SV(players, config) {
       idols: []
     })),
     // team data
-    teams: [[],[]],
-    teamNames: ["Red Drums","Blue Jays"],
-    teamColors: ["#FF0000", "#0000FF"],
+    teams: [[],[],[]],
+    teamNames: ["Red Drums","Blue Jays","Green Giants"],
+    teamColors: ["#FF0000", "#0000FF","#00FF00"],
 
     eliminated: [],
     challenges: [], // For the Ultimate Showdown
