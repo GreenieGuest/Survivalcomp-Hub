@@ -15,27 +15,21 @@ const PHASES = {
 // helpers
 
 function assignTeams(players, numTeams) {
-  let playerPool = [...players];
-  let newTeams = [];
-
-  const teamSize = Math.floor(players.length / numTeams);
-
-  console.log(players.length, numTeams, teamSize);
-
-  // split the cast evenly and update the remaining pool each time
-  for (let i = 0; i < numTeams - 1; i++) {
-    const sample = randomSample(playerPool, teamSize);
-    if (sample.length === 0) break;
-
-    // remove sampled players by id
-    const sampleIds = new Set(sample.map(p => p.id));
-    playerPool = playerPool.filter(p => !sampleIds.has(p.id));
-    if (sample.length > 0) {newTeams.push(sample)}
+  // Shuffle players (Fisher-Yates)
+  const shuffled = [...players];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  if (playerPool.length > 0) {newTeams.push(playerPool)} // push the rest
 
-  console.log(newTeams);
-  return newTeams;
+  const teams = Array.from({ length: numTeams }, () => []);
+
+  // Distribute players one by one
+  shuffled.forEach((player, index) => {
+    teams[index % numTeams].push(player);
+  });
+
+  return teams;
 }
 
 function getChallengeResults(challengeName, groups) {
