@@ -6,7 +6,7 @@ export function initialize_BR(players, config) {
     turn: 0,
     // Sim fundamentals
     points: false,
-    teams: false,
+    teams_game: false,
     castSize: players.length,
     config: config,
     barrel: randomInt(1,6),

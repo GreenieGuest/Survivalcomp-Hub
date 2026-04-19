@@ -1,6 +1,7 @@
 import { Container, Text, VStack, Tabs } from "@chakra-ui/react";
 import StillInTheRunning from "./StillInTheRunning.jsx";
 import { LeaderboardsDisplay } from "./PointsLeaderboard.jsx";
+import GameInfo from "./GameInfo.jsx";
 import PlacementGains from "./PlacementGains.jsx";
 import { FaHome } from "react-icons/fa";
 
@@ -13,6 +14,7 @@ const SimTabs = ({gameState}) => {
                 {gameState && gameState.points == false && <Tabs.Trigger value="tab-3">Elimination Order</Tabs.Trigger>}
                 {gameState && gameState.points == true && <Tabs.Trigger value="tab-4">Placements/Gains</Tabs.Trigger>}
                 {gameState && gameState.points == true && <Tabs.Trigger value="tab-5">Leaderboard</Tabs.Trigger>}
+                {gameState && gameState.teams_game == true && <Tabs.Trigger value="tab-6">Game Info</Tabs.Trigger>}
             </Tabs.List>
             <Tabs.Content value="tab-1">
                <Container>
@@ -36,6 +38,9 @@ const SimTabs = ({gameState}) => {
             </Tabs.Content>
             <Tabs.Content value="tab-5">
               <LeaderboardsDisplay playerList={gameState.currentlyPlaying} eliminatedList={gameState.eliminated} />
+            </Tabs.Content>
+            <Tabs.Content value="tab-6">
+              <GameInfo state={gameState} />
             </Tabs.Content>
         </Tabs.Root>
     )

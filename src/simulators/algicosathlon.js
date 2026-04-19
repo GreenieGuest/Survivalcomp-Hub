@@ -110,7 +110,7 @@ export function initialize_AS(players, config) {
     turn: 0,
     // Sim fundamentals
     points: true,
-    teams: false,
+    teams_game: false,
     // Game fundamentals
     castSize: players.length,
     config: config,

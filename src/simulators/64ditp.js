@@ -188,7 +188,7 @@ export function initialize_SV(players, config) {
     turn: 0,
     // Sim fundamentals
     points: false,
-    teams: true,
+    teams_game: true,
     // Game fundamentals
     castSize: players.length,
     config: config,
