@@ -1,69 +1,171 @@
-import { randomChoice, randomInt } from "./utils";
+import { randomChoice, randomSample } from "./utils";
 import { challenge } from "./modules";
 
-function elimination(eligible) {
-    console.log(eligible);
-    
-    var eliminated = randomChoice(eligible);
+// constants
 
-    return eliminated;
+const PHASES = {
+  START: 'S',
+  TWO_TEAMS: '2',
+  THREE_TEAMS: '3',
+  FOUR_TEAMS: '4',
+  MERGATORY: 'H',
+  MERGE: 'M'
+};
+
+// helpers
+
+function assignTeams(players, numTeams) {
+  let playerPool = [...players];
+  let newTeams = [];
+
+  const teamSize = players.length / numTeams;
+
+  // split the cast evenly and update the remaining pool each time
+  for (let i = 0; i < numTeams - 1; i++) {
+    const sample = randomSample(playerPool, teamSize);
+
+    // remove sampled players by id
+    const sampleIds = new Set(sample.map(p => p.id));
+    playerPool = playerPool.filter(p => !sampleIds.has(p.id));
+    newTeams.push(sample);
+  }
+  newTeams.push(playerPool); // push the rest
+
+  return newTeams;
 }
 
-function challengeTeam(challengeName, teams) {
-    let teamPoints = [0, 0];
-    
-    for (let team = 0; team < teams.length; team++) {
-      var points = 0;
-      for (let player = 0; player < teams[team].length; player++) {
-        var performance = challenge(challengeName, teams[team][player]);
-        points += performance;
-      }
-      teamPoints[team] = points;
-    }
+function getChallengeResults(challengeName, groups) {
+    const scores = groups.map(group =>
+      group.reduce((sum, player) => sum +
+    challenge(challengeName, player), 0)
+    );
 
     // Calculate who has the most points and who has the least
-    let placements = [...teamPoints]; // Place the SCORES in this array
-    placements.sort((a, b) => b - a);
-    let results = [...placements]; // Place the SORTED SCORES in this array
+    const ranking = scores
+      .map((score, index) => ({ score, index }))
+      .sort((a, b) => b.score - a.score);
 
-    // Convert placements from scores to team indices
+    const placements = ranking.map(r => r.index);
+    const results = ranking.map(r => r.score);
 
-    for (let x = 0; x < placements.length; x++) {
-        let index = teamPoints.indexOf(placements[x]);
-        placements[x] = index;
-        teamPoints[index] = 0;
-    }
     // Return to the main function an array with team placements based on index, and their scores in the challenge
     console.log([placements, results])
     return [placements, results];
 }
 
-// Challenge FFA: all athletes compete, placements and scores returned
-// Parameters: challenge name, competing player array
-// In the future: The Ultimate Showdown...
-function challengeFFA(challengeName, athletes) {
-    // For each athlete, they start out with 0 points
-    let playerPoints = Array(athletes.length).fill(0);
+function elimination(players, immuneId = null) {
+  const eligible = immuneId
+    ? players.filter(p => p.id !== immuneId)
+    : players;
 
-    // Based on challenge (placeholder) they will perform based on stats
-    for (let player = 0; player < athletes.length; player++) {
-        playerPoints[player] = challenge(challengeName, athletes[player]);
+  return randomChoice(eligible);
+}
+
+function isGameOver(state) {
+  return state.currentlyPlaying.length <= 1;
+}
+
+function finale(state) {
+  let winner = null;
+
+  if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
+    winner = state.eliminated.at(-1);
+  } else {
+    winner = state.currentlyPlaying[0] || null;
+  }
+
+  return {
+    ...state,
+    winner,
+    currentlyPlaying: [],
+    eliminated: winner
+      ? [...state.eliminated, winner]
+      : state.eliminated,
+    events: [
+      ...state.events,
+      ["Winner: ", (winner ? winner.name : "No one"), "! Press 'Start Game' to simulate again"]
+    ]
+  };
+}
+
+function updatePhase(state) {
+  let { currentlyPlaying, castSize, quarter, teams } = state;
+
+  // Initial team assignment
+  if (currentlyPlaying.length === castSize) {
+    return {
+      ...state,
+      teams: assignTeams(currentlyPlaying, 2),
+      quarter: PHASES.TWO_TEAMS
+    };
+  }
+
+  // Merge condition
+  if (currentlyPlaying.length === Math.floor(castSize / 2)) {
+    return {
+      ...state,
+      quarter: PHASES.MERGE
+    };
+  }
+
+  return state;
+}
+
+function pickChallenge(state) {
+  const challengeName = randomChoice(state.config.challenges);
+
+  return {
+    name: challengeName,
+    updatedState: {
+      ...state,
+      challenges: [...state.challenges, challengeName]
     }
+  };
+}
 
-    // Calculate who has the most points and who has the least
-    let placements = [...playerPoints]; // Place the SCORES in this array
-    placements.sort((a, b) => b - a);
-    let results = [...placements]; // Place the SORTED SCORES in this array
+// LOGIC
 
-    // Convert placements from scores to player indices
+function teamRound(state, challengeName) {
+  const [placements, scores] = getChallengeResults(challengeName, state.teams);
 
-    for (let x = 0; x < placements.length; x++) {
-        let index = playerPoints.indexOf(placements[x]);
-        placements[x] = index;
-        playerPoints[index] = 0;
-    }
-    // Return to the main function an array with player placements based on index, and their scores in the challenge
-    return [placements, results];
+  const losingTeamIndex = placements.at(-1);
+  const losingTeam = state.teams[losingTeamIndex];
+
+  const eliminatedPlayer = elimination(losingTeam);
+
+  return {
+    ...state,
+    turn: state.turn + 1,
+
+    currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== eliminatedPlayer.id),
+    teams: state.teams.map(team =>
+      team.filter(p => p.id !== eliminatedPlayer.id)
+    ),
+    eliminated: [...state.eliminated, eliminatedPlayer],
+    events: [
+      ...state.events,
+      [state.teamNames[losingTeamIndex], " lost the challenge. ", eliminatedPlayer, " was voted out"]
+    ]
+  };
+}
+
+function mergeRound(state, challengeName) {
+  // each player is its own 'party'
+  const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
+  
+  const immunePlayer = state.currentlyPlaying[placements[0]];
+  const eliminatedPlayer = elimination(state.currentlyPlaying.filter(p => p.id !== immunePlayer.id));
+
+  return {
+    ...state,
+    turn: state.turn + 1,
+    currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== eliminatedPlayer.id),
+    eliminated: [...state.eliminated, eliminatedPlayer],
+    events: [
+      ...state.events,
+      [immunePlayer.name," won immunity. ", eliminatedPlayer.name, " was voted out"]
+    ]
+  }
 }
 
 export function initialize_SV(players, config) {
@@ -80,7 +182,7 @@ export function initialize_SV(players, config) {
     castSize: players.length,
     config: config,
     winner: null,
-    quarter: 'S', // S: start, #: # of teams, H: have-gots vs. have-nots, M: merge
+    quarter: PHASES.START,
     currentlyPlaying: players.map(p => ({...p,
       faction: null,
       idols: []
@@ -118,84 +220,16 @@ export function FF_SV(state, playerList, config) { // repeat teams vote game unt
 }
 
 export function survivor(state) {
-  if (state.currentlyPlaying.length <= 1) {
-    var soleSurvivor = null;
-    if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
-      soleSurvivor = state.eliminated[state.eliminated.length - 1]; // last eliminated player wins by default
-    } else {
-      soleSurvivor = state.currentlyPlaying[0];
-    }
-    return {
-      ...state,
-      winner: soleSurvivor || null,
-      currentlyPlaying: [],
-      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-      events: [
-        ...state.events,
-        {
-          type: "system",
-          message: "Winner: " + ((soleSurvivor ? soleSurvivor.name : "No one") + "! Press 'Start Game' to simulate again"),
-        }
-      ]
-    };
+  if (isGameOver(state)) {
+    return finale(state);
   }
 
-  
-  // Swap conditions
-  if (state.currentlyPlaying.length == state.castSize) { // First assignment
-    let shuffledPlayers = [...state.currentlyPlaying].sort(() => 0.5 - Math.random());
-    state.teams[0] = shuffledPlayers.slice(0, Math.ceil(state.castSize / 2)).map(p => ({...p, faction: 0}));
-    state.teams[1] = shuffledPlayers.slice(Math.ceil(state.castSize / 2)).map(p => ({...p, faction: 1}));
-    state.quarter = '2'
-  } else if (state.currentlyPlaying.length == Math.floor(state.castSize / 2)) { // Merge teams
-    state.quarter = 'M';
-    // teams are no longer relevant
-    console.log("Merge");
-  }
+  let updatedState = updatePhase(state);
 
-  console.log(state.teams);
+  const { name: challengeName, updatedState: withChallenge } =
+    pickChallenge(updatedState);
 
-  let challengeName;
-      const challengeTypes = state.config.challenges;
-      challengeName = randomChoice(challengeTypes);
-      state.challenges.push(challengeName);
-
-  if (state.quarter != 'M') {
-	  let [placements, scores] = challengeTeam(challengeName, state.teams);
-    console.log("Scores for each team: ", scores);
-    let losingTeam = state.teams[placements.at(-1)];
-    console.log(state.teamNames[placements.at(-1)], " loses and must vote someone out");
-    console.log(losingTeam)
-    let chosen = elimination(losingTeam);
-    
-    return {
-      ...state,
-      turn: state.turn + 1,
-      currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
-      teams: state.teams.map(team =>
-        team.filter(p => p.id !== chosen.id)
-      ),
-      eliminated: [...state.eliminated, chosen], // add to banned players
-      events: [
-        ...state.events,
-        [chosen, " was voted out"]
-      ],
-    };
-  } else {
-    let [placements, scores] = challengeFFA(challengeName, state.currentlyPlaying);
-    console.log("Scores for each player: ", scores);
-    console.log(state.currentlyPlaying[placements[0]], " wins immunity");
-    const chosen = elimination(state.currentlyPlaying.filter(p => p.id !== state.currentlyPlaying[placements[0]].id));
-
-    return {
-      ...state,
-      turn: state.turn + 1,
-      currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== chosen.id),
-      eliminated: [...state.eliminated, chosen], // add to banned players
-      events: [
-        ...state.events,
-        [chosen, " was voted out"]
-      ],
-    };
-  }
+  return withChallenge.quarter !== PHASES.MERGE
+    ? teamRound(withChallenge, challengeName)
+    : mergeRound(withChallenge, challengeName);
 }
