@@ -109,7 +109,10 @@ function updatePhase(state) {
   }
 
   // Swap condition
-  if (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1) {
+  if (state.quarter != PHASES.MERGE && state.quarter != PHASES.MERGATORY &&
+    (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
+  )
+    {
     console.log("An Swap is occured!");
     return {
       ...state,
