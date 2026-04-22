@@ -139,11 +139,19 @@ function pickChallenge(state) {
 // LOGIC
 
 function teamRound(state, challengeName) {
-  const [placements, scores] = getChallengeResults(challengeName, state.teams);
+  // Make things even by "sitting out" extra players if one team is bigger than another (Remove this in BOTS)
+  let teamCopies = [...state.teams]
+  const smallestTeamSize = Math.min(...teamCopies.map(a => a.length));
+  console.log(smallestTeamSize)
+  teamCopies = state.teams.map(team =>
+    randomSample(team, smallestTeamSize)
+  );
+
+  const [placements, scores] = getChallengeResults(challengeName, teamCopies);
 
   const losingTeamIndex = placements.at(-1);
   console.log(losingTeamIndex)
-  console.log(state.teams)
+  console.log(teamCopies)
   const losingTeam = state.teams[losingTeamIndex];
 
   console.log(losingTeam, "lost")
