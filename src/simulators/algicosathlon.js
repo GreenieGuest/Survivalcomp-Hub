@@ -38,7 +38,7 @@ function elimination(athletes, challengeName) {
           console.log("Tiebreaker between " + tiebreaker_group.map(p => p.name).join(", ") + " with " + lowestScorer.points + " points.");
 
           // Run the tiebreaker challenge
-          let [placements, scores] = challengeFFA(challengeName, tiebreaker_group);
+          let [placements, scores] = getChallengeResults(challengeName, tiebreaker_group);
           var worst_score = Math.min(...scores);
           // If a tie happened within the Duel/3Duel, do another tiebreaker with the contestants who got the worst score
           tiebreaker_group = tiebreaker_group.filter((p, index) => scores[index] === worst_score);
@@ -62,28 +62,19 @@ function getPoints(player) {
 // Challenge FFA: all athletes compete, placements and scores returned
 // Parameters: challenge name, competing player array
 // In the future: The Ultimate Showdown...
-function challengeFFA(challengeName, athletes) {
-    // For each athlete, they start out with 0 points
-    let playerPoints = Array(athletes.length).fill(0);
-
-    // Based on challenge (placeholder) they will perform based on stats
-    for (let player = 0; player < athletes.length; player++) {
-        playerPoints[player] = challenge(challengeName, athletes[player]);
-    }
+function getChallengeResults(challengeName, athletes) {
+    const scores = athletes.map(p => challenge(challengeName, p));
 
     // Calculate who has the most points and who has the least
-    let placements = [...playerPoints]; // Place the SCORES in this array
-    placements.sort((a, b) => b - a);
-    let results = [...placements]; // Place the SORTED SCORES in this array
+    const ranking = scores
+      .map((score, index) => ({ score, index }))
+      .sort((a, b) => b.score - a.score);
 
-    // Convert placements from scores to player indices
+    const placements = ranking.map(r => r.index);
+    const results = ranking.map(r => r.score);
 
-    for (let x = 0; x < placements.length; x++) {
-        let index = playerPoints.indexOf(placements[x]);
-        placements[x] = index;
-        playerPoints[index] = 0;
-    }
-    // Return to the main function an array with player placements based on index, and their scores in the challenge
+    // Return to the main function an array with team placements based on index, and their scores in the challenge
+    console.log([placements, results])
     return [placements, results];
 }
 
@@ -179,7 +170,7 @@ export function algicosathlon(state) {
 
   // Placements: Players sorted by score, value is their ID
   // Scores: Players sorted by ID, value is their score
-	let [placements, scores] = challengeFFA(challengeName, state.currentlyPlaying);
+	let [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying);
 
   let runningTiedPlacement = 0; // for handling ties in placements (if 1st and 2nd are tied, they should both get 1st place points, etc.)
   for (let x = 0; x < placements.length; x++) {

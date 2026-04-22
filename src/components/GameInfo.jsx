@@ -24,7 +24,7 @@ const GameInfo = ({ state }) => {
                 <Wrap gap="5px" justify="center">
                 {state.teams.map((team, index) => (
                     <WrapItem key={index}>
-                        <Center padding="2px" w="200px" bg={state.teamInfo[index].color || "gray.400"} borderRadius="md" color={"black"}>
+                        <Center padding="2px" w="250px" bg={state.teamInfo[index].color || "gray.400"} borderRadius="md" color={"black"}>
                             <VStack>
                                 <Heading>{state.teamInfo[index].name}</Heading>
                                 <Wrap gap="5px" justify="center">
