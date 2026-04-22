@@ -194,6 +194,8 @@ function mergeRound(state, challengeName) {
   }
 }
 
+// PUBLIC API
+
 export function initialize_SV(players, config) {
   // Function called by the interface to create a simulation by importing player profiles (and in the future, configuration settings).
   // Contains fundamentals (turn, participants, winner)

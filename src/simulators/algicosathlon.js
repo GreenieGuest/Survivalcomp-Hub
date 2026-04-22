@@ -23,6 +23,29 @@ function getBasePoints(numPlayers, distribution) {
   return basePoints;
 }
 
+function getPoints(player) {
+    return player.points;
+}
+
+// Challenge FFA: all athletes compete, placements and scores returned
+// Parameters: challenge name, competing player array
+// In the future: The Ultimate Showdown...
+function getChallengeResults(challengeName, athletes) {
+    const scores = athletes.map(p => challenge(challengeName, p));
+
+    // Calculate who has the most points and who has the least
+    const ranking = scores
+      .map((score, index) => ({ score, index }))
+      .sort((a, b) => b.score - a.score);
+
+    const placements = ranking.map(r => r.index);
+    const results = ranking.map(r => r.score);
+
+    // Return to the main function an array with team placements based on index, and their scores in the challenge
+    console.log([placements, results])
+    return [placements, results];
+}
+
 function elimination(athletes, challengeName) {
     console.log(athletes);
     // find eliminated player
@@ -55,28 +78,7 @@ function elimination(athletes, challengeName) {
     return eliminated;
 }
 
-function getPoints(player) {
-    return player.points;
-}
-
-// Challenge FFA: all athletes compete, placements and scores returned
-// Parameters: challenge name, competing player array
-// In the future: The Ultimate Showdown...
-function getChallengeResults(challengeName, athletes) {
-    const scores = athletes.map(p => challenge(challengeName, p));
-
-    // Calculate who has the most points and who has the least
-    const ranking = scores
-      .map((score, index) => ({ score, index }))
-      .sort((a, b) => b.score - a.score);
-
-    const placements = ranking.map(r => r.index);
-    const results = ranking.map(r => r.score);
-
-    // Return to the main function an array with team placements based on index, and their scores in the challenge
-    console.log([placements, results])
-    return [placements, results];
-}
+// -------------------------- PUBLIC API --------------------------------
 
 export function FF_AS(state, playerList, config) { // repeat until winner
   if (!state || state.winner) {
