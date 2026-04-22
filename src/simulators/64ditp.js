@@ -88,6 +88,7 @@ function finale(state) {
 
 function updatePhase(state) {
   let { currentlyPlaying, castSize, quarter, startingTeams, teams } = state;
+  let mergeThreshold = (state.config.mergeThreshold ? state.config.mergeThreshold : Math.floor(castSize / 2))
 
   // Initial team assignment
   if (currentlyPlaying.length === castSize) {
@@ -98,22 +99,22 @@ function updatePhase(state) {
     };
   }
 
+  // Merge condition (Must be checked before swap or swap will override)
+  if (currentlyPlaying.length == mergeThreshold) {
+    console.log("An Merge is occured!");
+    return {
+      ...state,
+      quarter: PHASES.MERGE
+    };
+  }
+
   // Swap condition
-  if (Math.min(...teams.map(a => a.length)) === 1) {
+  if (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1) {
     console.log("An Swap is occured!");
     return {
       ...state,
       teams: assignTeams(teams.flat(), teams.length - 1),
       quarter: PHASES.TWO_TEAMS
-    };
-  }
-
-  // Merge condition
-  if (currentlyPlaying.length === Math.floor(castSize / 2)) {
-    console.log("An Merge is occured!");
-    return {
-      ...state,
-      quarter: PHASES.MERGE
     };
   }
 

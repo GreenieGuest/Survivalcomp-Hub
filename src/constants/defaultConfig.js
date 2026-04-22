@@ -3,6 +3,7 @@ const default_config = {
     pointDistribution: "expo",
     rateOfChange: 1.5,
     startingTeams: 2,
+    swapThresholds: [],
     teamInfo: [
         {
             name: "Red Drums",
@@ -16,6 +17,6 @@ const default_config = {
             name: "Blue Jays",
             color: "#0000FF",
         },
-    ]
+    ],
 };
 export default default_config;

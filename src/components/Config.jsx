@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Separator, HStack, Text, createListCollection, Button, NumberInput } from "@chakra-ui/react";
+import { Separator, HStack, Text, createListCollection, Button, NumberInput, Input } from "@chakra-ui/react";
 import { MiscSelector } from "./Dropdowns.jsx";
 
 const Config = ({ config, setConfig }) => {
@@ -9,6 +9,24 @@ const Config = ({ config, setConfig }) => {
     const [pointDiff, setPointDiff] = useState("expo");
     const [rateOfChange, setRateOfChange] = useState(String(1.5)); // Chakra number constraint
     const [startingTeams, setStartingTeams] = useState(String(2)); // Chakra number constraint
+
+    const [swapInput, setSwapInput] = useState('');
+    const [swapAt, setSwapAt] = useState([]);
+    const handleSwapInputChange = (e) => {
+        const stringValue = e.target.value;
+        setSwapInput(stringValue);
+        
+        // Split by comma, remove whitespace, and convert to numbers
+        const newArray = stringValue
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item !== '' && !isNaN(item))
+        .map(Number);
+        
+        setSwapAt(newArray);
+    };
+    const [mergeThreshold, setMergeThreshold] = useState(null);
+
     const [teamInfo, setTeamInfo] = useState([]);
 
     const challengeModuses = createListCollection({
@@ -54,7 +72,22 @@ const Config = ({ config, setConfig }) => {
                 <Text flexShrink="0">Teams-specific</Text>
                 <Separator flex="1" />
             </HStack>
-            <MiscSelector options={pdOptions} title="Points Distribution" state={pointDiff} setState={setPointDiff} />
+            <HStack justify="center">
+                <Text flexShrink="0">Swap Teams At</Text>
+                <Input
+                    width="250px"
+                    placeholder="Enter SITR counts (e.g. 16,18,20)"
+                    value={swapInput}
+                    onChange={handleSwapInputChange}
+                />
+            </HStack>
+            <HStack justify="center">
+                <Text>Merge At (Default: half of cast size)</Text>
+                <NumberInput.Root width="100px" step={1} onValueChange={(details) => setMergeThreshold(details.value)}>
+                    <NumberInput.Control />
+                    <NumberInput.Input />
+                </NumberInput.Root>
+            </HStack>
             <HStack justify="center">
                 <Text>Starting Teams</Text>
                 <NumberInput.Root width="100px" defaultValue={'2'} step={1} onValueChange={(details) => setStartingTeams(details.value)}>
@@ -72,6 +105,8 @@ const Config = ({ config, setConfig }) => {
                 pointDistribution: pointDiff,
                 rateOfChange: rateOfChange,
                 startingTeams: startingTeams,
+                swapThresholds: swapAt,
+                mergeThreshold: mergeThreshold,
             })}>
                 Update Configuration
             </Button>
