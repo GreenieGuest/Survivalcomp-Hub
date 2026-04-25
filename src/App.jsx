@@ -150,12 +150,26 @@ function App() {
     if (storedPlayers) {
       setPlayerList(JSON.parse(storedPlayers));
     }
+    const storedConfig = localStorage.getItem("config");
+    if (storedConfig) {
+      setConfig(JSON.parse(storedConfig));
+    }
+    const storedStats = localStorage.getItem("stats");
+    if (storedStats) {
+      setPlayerStats(JSON.parse(storedStats));
+    }
   }, []);
 
-  //Save player profiles in local storage
+  //Save user data in local storage
   useEffect(() => {
     localStorage.setItem("playerProfiles", JSON.stringify(playerList));
   }, [playerList]);
+  useEffect(() => {
+    localStorage.setItem("config", JSON.stringify(config));
+  }, [config]);
+  useEffect(() => {
+    localStorage.setItem("stats", JSON.stringify(playerStats));
+  }, [playerStats]);
 
 
   return (
