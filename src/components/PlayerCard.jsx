@@ -3,11 +3,13 @@ import {Button, Input, Container, ColorPicker, parseColor, Portal, HStack, Group
 import { FaTrash } from "react-icons/fa";
 import { StatsCell } from "./StatsPopup.jsx";
 import default_player from "../constants/defaultPlayer.js";
+import { useSimStore } from "../store/simulationStore.js";
 
-export default function PlayerCard({ playerList, setPlayerList }) {
+export default function PlayerCard() {
     const [name, setName] = useState("");
 	const [color, setColor] = useState(parseColor("#ffffff"));
     const [emptyMessage, setEmptyMessage] = useState(false);
+    const { playerList = [], setPlayerList } = useSimStore();
 
     const handlePostPlayer = (e) => {
         e.preventDefault();

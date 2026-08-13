@@ -11,7 +11,9 @@ export const useSimStore = create(
         gameState: null,
 
         // Actions
-        setPlayerList: (playerList) => set({ playerList }),
+        setPlayerList: (updater) => set((state) => ({
+            playerList: typeof updater === 'function' ? updater(state.playerList) : updater
+        })),
         setConfig: (config) => set({ config }),
 
         applyGameResults: (gameState) => {

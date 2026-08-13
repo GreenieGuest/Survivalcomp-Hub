@@ -3,6 +3,7 @@ import { Flex, Container, Button, FileUpload, VStack, Alert, HStack } from "@cha
 import { HiUpload } from "react-icons/hi"
 import { FaDownload } from "react-icons/fa";
 import { ExportProfiles } from "../ExportProfiles.js";
+import { useSimStore } from '../store/simulationStore.js';
 
 function extractPlayers(data) {
     // Helper function to extract player info from JSON data, whether array (my preferred format) or an object
@@ -31,7 +32,8 @@ function extractPlayers(data) {
     return [];
 }
 
-const ProfileParser = ({ playerList, setPlayerList }) => {
+const ProfileParser = () => {
+    const { playerList = [], setPlayerList } = useSimStore()
     const [jsonData, setJsonData] = useState(null)
     const handleFileChange = ({ files }) => {
         const file = files?.[0];

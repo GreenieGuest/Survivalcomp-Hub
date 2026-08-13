@@ -22,18 +22,18 @@ import { GrConfigure } from "react-icons/gr";
 import { FaChartSimple } from "react-icons/fa6";
 import { FaFastForward } from "react-icons/fa";
 import './App.css'
+import { useSimStore } from "./store/simulationStore";
 
 import default_config from "./constants/defaultConfig.js";
 
 function App() {
-  const [playerList, setPlayerList] = useState([]);
-  const [playerStats, setPlayerStats] = useState({}); // Future use for storing player stats across simulations
-  const [simCount, setSimCount] = useState(0);
+  const { playerList = [], setPlayerList, playerStats, simCount, setConfig, clearStats, applyGameResults } = useSimStore()
+  const storedConfig = useSimStore(state => state.config);
 
   const [simulation, setSimulation] = useState(null);
   const [runningSim, setRunningSim] = useState(null); // running sim may be different if user messes around
   const [gameState, setGameState] = useState(null);
-  const [config, setConfig] = useState(default_config);
+  const config = storedConfig ?? default_config;
   
   const [statMetric, setStatMetric] = useState('avgPlacement');
 
@@ -89,52 +89,19 @@ function App() {
     setGameState(sim.fastForward(gameState, playerList, config));
   };
 
-  function applyGameResults(prevStats) {
-    console.log("Provoked to apply game results to stats.");
-    const newStats = { ...prevStats };
-    // Update stats based on gameState
-    gameState.eliminated.forEach((player, index) => {
-      const prev = newStats[player.id] ?? {
-        object: player,
-        wins: 0,
-        placements: [],
-      };
-
-      newStats[player.id] = {
-        ...prev,
-        wins: prev.wins + (gameState.castSize - index === 1 ? 1 : 0),
-        placements: [...prev.placements, gameState.castSize - index],
-      };
-    });
-    const sims = simCount + 1;
-    setSimCount(sims);
-
-    return newStats;
-  }
-
-  function clearStats() {
-    setPlayerStats({});
-    setSimCount(0);
-  }
-
   useEffect(() => {
-    if (!gameState) return;
-
-    if (!gameState.winner) return;
-
-    setPlayerStats(prev =>
-      applyGameResults(prev)
-    );
+    if (!gameState?.winner) return;
+    applyGameResults(gameState);
   }, [gameState]);
 
 
   //Collapsible sections for main app
   const items = [
   { value: "players", title: `Player Profiles (${playerList.length})`, text: 
-  <Container>
-              <ProfileParser playerList={playerList} setPlayerList={setPlayerList} />
-              <PlayerCard playerList={playerList} setPlayerList={setPlayerList} />
-  </Container>
+    <Container>
+      <ProfileParser />
+      <PlayerCard />
+    </Container>
   , icon: <MdOutlinePeople /> },
   { value: "configuration", title: "Configuration", text: <Config config={config} setConfig={setConfig} />, icon: <GrConfigure /> },
   { value: "stats", title: `Stats (from ${simCount} sims)`, text:<Container>
@@ -143,34 +110,6 @@ function App() {
       <StatsChart playerStatsList={playerStats} sortByMetric={statMetric} />
     </Container>, icon: <FaChartSimple /> },
   ]
-
-  //Load local storage profiles upon startup
-  useEffect(() => {
-    const storedPlayers = localStorage.getItem("playerProfiles");
-    if (storedPlayers) {
-      setPlayerList(JSON.parse(storedPlayers));
-    }
-    const storedConfig = localStorage.getItem("config");
-    if (storedConfig) {
-      setConfig(JSON.parse(storedConfig));
-    }
-    const storedStats = localStorage.getItem("stats");
-    if (storedStats) {
-      setPlayerStats(JSON.parse(storedStats));
-    }
-  }, []);
-
-  //Save user data in local storage
-  useEffect(() => {
-    localStorage.setItem("playerProfiles", JSON.stringify(playerList));
-  }, [playerList]);
-  useEffect(() => {
-    localStorage.setItem("config", JSON.stringify(config));
-  }, [config]);
-  useEffect(() => {
-    localStorage.setItem("stats", JSON.stringify(playerStats));
-  }, [playerStats]);
-
 
   return (
     <Container pt={5} width={'auto'}>
