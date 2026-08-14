@@ -110,7 +110,7 @@ function EventEntry({event}) {
 
                 <Text mt={2}>Potential suspects:</Text>
                 {event.potentialSus.map(p => (
-                    <p key={p.id}><Player player={p} /> - {p.clues.join(", ")}</Text>
+                    <Text key={p.id}><Player player={p} /> - {p.clues.join(", ")}</Text>
                 ))}
 
                 <Text mt={2}>The players who are not potential suspects will now vote for the killer.</Text>
@@ -141,5 +141,34 @@ function EventEntry({event}) {
 export default function EventLog() {
     const events = useSimStore(state => state.events)
 
-    return events.map((event, i) => <EventEntry key={i} event={event} />)
+    if (!events || events.length === 0) return null;
+
+    // group events by turn
+    const byTurn = events.reduce((acc, event) => {
+        const t = event.turn ?? 0;
+        if (!acc[t]) acc[t] = [];
+        acc[t].push(event);
+        return acc;
+    }, {});
+
+    return (
+        <VStack align="stretch" gap={0} mt={2}>
+            {Object.entries(byTurn).map(([turn, turnEvents]) => (
+                <Box key={turn}>
+                    <HStack my={3}>
+                        <Separator flex="1" borderColor="fg.subtle" />
+                        <Text fontSize="sm" color="fg.subtle" fontWeight="bold" flexShrink="0">
+                            DAY {turn}
+                        </Text>
+                        <Separator flex="1" borderColor="fg.subtle" />
+                    </HStack>
+                    <VStack align="stretch" gap={1} px={2}>
+                        {turnEvents.map((event, i) => (
+                            <EventEntry key={i} event={event} />
+                        ))}
+                    </VStack>
+                </Box>
+            ))}
+        </VStack>
+    );
 }
