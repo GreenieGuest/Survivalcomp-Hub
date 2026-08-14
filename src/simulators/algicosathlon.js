@@ -119,13 +119,6 @@ export function initialize_AS(players, config) {
     // Data collection
     placements: [],
     scores: [],
-
-    events: [
-      {
-        type: "system",
-        message: "Game started with " + players.length + " athletes."
-      }
-    ]
   };
 }
 

@@ -1,5 +1,6 @@
 import { randomChoice, randomSample } from "./utils";
 import { challenge } from "./modules";
+import { useSimStore } from "../store/simulationStore";
 
 // constants
 
@@ -64,13 +65,14 @@ function isGameOver(state) {
 }
 
 function finale(state) {
-  let winner = null;
+  const { logEvent } = useSimStore.getState();
 
-  if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
-    winner = state.eliminated.at(-1);
-  } else {
-    winner = state.currentlyPlaying[0] || null;
-  }
+  const winner = state.currentlyPlaying.length === 0 && state.eliminated.length > 0
+    ? state.eliminated.at(-1)
+    : state.currentlyPlaying[0] || null;
+
+  logEvent({ type: 'header', label: 'Winner' });
+  logEvent({ type: 'system', message: `${winner ? winner.name : 'No one'} wins! Press 'Start Game' to simulate again.` });
 
   return {
     ...state,
@@ -79,14 +81,11 @@ function finale(state) {
     eliminated: winner
       ? [...state.eliminated, winner]
       : state.eliminated,
-    events: [
-      ...state.events,
-      ["Winner: ", (winner ? winner.name : "No one"), "! Press 'Start Game' to simulate again"]
-    ]
   };
 }
 
 function updatePhase(state) {
+  const { logEvent } = useSimStore.getState();
   let { currentlyPlaying, castSize, quarter, startingTeams, teams } = state;
   let mergeThreshold = (state.config.mergeThreshold ? state.config.mergeThreshold : Math.floor(castSize / 2))
 
@@ -101,7 +100,8 @@ function updatePhase(state) {
 
   // Merge condition (Must be checked before swap or swap will override)
   if (currentlyPlaying.length == mergeThreshold) {
-    console.log("An Merge is occured!");
+    logEvent({ type: 'header', label: 'Merge' });
+    logEvent({ type: 'system', message: 'The tribes have merged! Individual immunity is now in play.' });
     return {
       ...state,
       quarter: PHASES.MERGE
@@ -113,7 +113,8 @@ function updatePhase(state) {
     (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
   )
     {
-    console.log("An Swap is occured!");
+    logEvent({ type: 'header', label: 'Team Swap' });
+    logEvent({ type: 'system', message: 'The teams have swapped, and the dynamic has shifted.' });
     return {
       ...state,
       teams: assignTeams(teams.flat(), teams.length - 1),
@@ -139,6 +140,8 @@ function pickChallenge(state) {
 // LOGIC
 
 function teamRound(state, challengeName) {
+  const { logEvent } = useSimStore.getState();
+
   // Make things even by "sitting out" extra players if one team is bigger than another (Remove this in BOTS)
   let participatingTeamMembers = [...state.teams]
   const smallestTeamSize = Math.min(...participatingTeamMembers.map(a => a.length));
@@ -154,10 +157,13 @@ function teamRound(state, challengeName) {
   console.log(participatingTeamMembers)
   const losingTeam = state.teams[losingTeamIndex];
 
-  console.log(losingTeam, "lost")
+  logEvent({ type: 'header', label: 'Immunity Challenge' });
+  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
+  logEvent({ type: 'system', message: `${losingTeam} loses the challenge and will have to vote someone out tonight.` });
 
   const eliminatedPlayer = elimination(losingTeam);
-  console.log(eliminatedPlayer, "is eliminated")
+  logEvent({ type: 'header', label: 'General Meeting' });
+  logEvent({ type: 'system', message: `${eliminatedPlayer} has been voted out..` });
 
   return {
     ...state,
@@ -168,10 +174,6 @@ function teamRound(state, challengeName) {
       team.filter(p => p.id !== eliminatedPlayer.id)
     ),
     eliminated: [...state.eliminated, eliminatedPlayer],
-    events: [
-      ...state.events,
-      [state.teamInfo[losingTeamIndex], " lost the challenge. ", eliminatedPlayer, " was voted out"]
-    ]
   };
 }
 
@@ -182,15 +184,17 @@ function mergeRound(state, challengeName) {
   const immunePlayer = state.currentlyPlaying[placements[0]];
   const eliminatedPlayer = elimination(state.currentlyPlaying.filter(p => p.id !== immunePlayer.id));
 
+  logEvent({ type: 'header', label: 'Immunity Challenge' });
+  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
+  logEvent({ type: 'system', message: `${immunePlayer} wins immunity! Everyone else will be at risk for being voted out tonight.` });
+  logEvent({ type: 'header', label: 'General Meeting' });
+  logEvent({ type: 'system', message: `${eliminatedPlayer} has been voted out..` });
+
   return {
     ...state,
     turn: state.turn + 1,
     currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== eliminatedPlayer.id),
     eliminated: [...state.eliminated, eliminatedPlayer],
-    events: [
-      ...state.events,
-      [immunePlayer.name," won immunity. ", eliminatedPlayer.name, " was voted out"]
-    ]
   }
 }
 
@@ -228,13 +232,6 @@ export function initialize_SV(players, config) {
     eliminated: [],
     challenges: [], // For the Ultimate Showdown
     //Sim-specific
-
-    events: [
-      {
-        type: "system",
-        message: "Game started with " + players.length + " players."
-      }
-    ]
   };
 }
 

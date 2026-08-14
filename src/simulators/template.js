@@ -1,4 +1,5 @@
 import { randomChoice, randomInt } from "./utils";
+import { useSimStore } from "../store/simulationStore";
 
 export function initialize_MI(players, config) {
   // Function called by the interface to create a simulation by importing player profiles (and in the future, configuration settings).
@@ -17,13 +18,6 @@ export function initialize_MI(players, config) {
     currentlyPlaying: [...players],
     eliminated: [],
     //Sim-specific
-
-    events: [
-      {
-        type: "system",
-        message: "Game started with " + players.length + " players."
-      }
-    ]
   };
 }
 
@@ -42,23 +36,29 @@ export function FF_MI(state, playerList, config) { // repeat murderIsland until 
 }
 
 export function murderIsland(state) {
+  // Game format / summary goes here
+  const { logEvent, clearEvents } = useSimStore.getState();
+
+  // Default Finale Block
   if (state.currentlyPlaying.length <= 1) {
-    return {
+      const soleSurvivor = state.currentlyPlaying.length === 0
+        ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
+        : state.currentlyPlaying[0];
+
+      logEvent({ type: 'header', label: 'Winner' })
+      logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
+
+      return {
       ...state,
-      winner: state.currentlyPlaying[0] || null,
-      events: [
-        ...state.events,
-        {
-          type: "system",
-          message: ((state.currentlyPlaying[0] ? state.currentlyPlaying[0].name : "No one") + " is the sole survivor of Murder Island."),
-        }
-      ]
+      winner: soleSurvivor || null,
+      currentlyPlaying: [],
+      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
     };
   }
 
-    return {
-        ...state,
-        turn: state.turn + 1,
-    };
+  return {
+      ...state,
+      turn: state.turn + 1,
+  };
 
 }

@@ -1,4 +1,5 @@
 import { randomChoice, randomInt } from "./utils";
+import { useSimStore } from "../store/simulationStore";
 
 const clues = ["Black","Blonde","Brunette","Ginger",
     "Blue","Gray","Green","Khaki","Matte","Purple","Red","White","Yellow",
@@ -19,6 +20,12 @@ export function initialize_MI(players, config) {
         clues: p.clues || [randomChoice(clues), randomChoice(clues), randomChoice(clues), randomChoice(clues)]
     }));
 
+    logEvent({
+        type: "murderIslandStart",
+        players: playerProfiles,
+        message: players.length + " players are trapped on Murder Island..."
+    })
+
   return {
     turn: 0,
     // Sim fundamentals
@@ -31,14 +38,6 @@ export function initialize_MI(players, config) {
     currentlyPlaying: playerProfiles,
     eliminated: [],
     //Sim-specific
-
-    events: [
-      {
-        type: "murderIslandStart",
-        players: playerProfiles,
-        message: players.length + " players are trapped on Murder Island..."
-      }
-    ]
   };
 }
 
@@ -60,44 +59,35 @@ export function FF_MI(state, playerList, config) { // repeat murderIsland until 
 }
 
 export function murderIsland(state) {
+    const { logEvent, clearEvents } = useSimStore.getState();
+
+    // Default Finale Block
     if (state.currentlyPlaying.length <= 1) {
-        var soleSurvivor = null;
-        if (state.currentlyPlaying.length === 0 && state.eliminated.length > 0) {
-          soleSurvivor = state.eliminated[state.eliminated.length - 1]; // last eliminated player wins by default
-        } else {
-          soleSurvivor = state.currentlyPlaying[0];
-        }
+        const soleSurvivor = state.currentlyPlaying.length === 0
+          ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
+          : state.currentlyPlaying[0];
+
+        logEvent({ type: 'header', label: 'Winner' })
+        logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} is the sole survivor of Murder Island.` })
+
         return {
         ...state,
         winner: soleSurvivor || null,
         currentlyPlaying: [],
         eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-        events: [
-            ...state.events,
-            {
-            type: "system",
-            message: ((soleSurvivor ? soleSurvivor.name : "No one") + " is the sole survivor of Murder Island."),
-            }
-        ]
-        };
+      };
     }
 
     const murderer = randomChoice(state.currentlyPlaying);
     const victim = randomChoice(state.currentlyPlaying.filter(p => p.id !== murderer.id))
 
     if (state.currentlyPlaying.filter(p => p.id !== victim.id).length <= 1) { // murderer victory
+        logEvent({ type: 'system', message: `${murderer.name} eliminates ${victim.name} and becomes the sole survivor of Murder Island.` })
         return {
         ...state,
         winner: murderer || null,
         currentlyPlaying: [],
         eliminated: [...state.eliminated, victim, murderer], // add to banned players
-        events: [
-            ...state.events,
-            {
-            type: "system",
-            message: murderer.name + " eliminates " + victim.name + " and becomes the sole survivor of Murder Island.",
-            }
-        ]
         };
     }
 
@@ -112,26 +102,23 @@ export function murderIsland(state) {
 
     const executed = randomChoice(potentialSuspects);
 
+    logEvent({
+          type: "murder",
+          victim: victim,
+          murderer: murderer,
+          executed: executed,
+          potentialSus: potentialSuspects,
+          realClue1: realClue1,
+          realClue2: realClue2,
+          fakeClue1: fakeClue1,
+          fakeClue2: fakeClue2,
+          remaining: state.currentlyPlaying.length - 2
+        })
     return {
         ...state,
         currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== victim.id && p.id !== executed.id),
         eliminated: [...state.eliminated, victim, executed], // add to banned players
         turn: state.turn + 1,
-        events: [
-            ...state.events,
-            {
-            type: "murder",
-            victim: victim,
-            murderer: murderer,
-            executed: executed,
-            potentialSus: potentialSuspects,
-            realClue1: realClue1,
-            realClue2: realClue2,
-            fakeClue1: fakeClue1,
-            fakeClue2: fakeClue2,
-            remaining: state.currentlyPlaying.length - 2
-            }
-        ],
     };
 
 }
