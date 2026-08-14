@@ -32,6 +32,13 @@ export const useSimStore = create(
 
         clearStats: () => set({ playerStats: {}, simCount: 0 }),
         setGameState: (gameState) => set({ gameState }),
+
+        // Events Handler
+        events: [],
+        logEvent: (event) => set(state => ({
+            events: [...state.events, { ...event, turn: state.gameState?.turn ?? 0 }]
+        })),
+        clearEvents: () => set({ events: [] }),
     }),
     {
       name: 'survivalcomp-storage',
