@@ -1,4 +1,5 @@
 import { randomChoice, randomInt } from "./utils";
+import { isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
 export function initialize_BR(players, config) {
@@ -39,24 +40,12 @@ export function banRoulette(state) {
 
   // Every round... pick one random player to be eliminated.
   // (The most simple of survivalcomps)
-  
+
   const { logEvent, clearEvents } = useSimStore.getState();
 
   // Default Finale Block
-  if (state.currentlyPlaying.length <= 1) {
-      const soleSurvivor = state.currentlyPlaying.length === 0
-        ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
-        : state.currentlyPlaying[0];
-
-      logEvent({ type: 'header', label: 'Winner' })
-      logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
-
-      return {
-      ...state,
-      winner: soleSurvivor || null,
-      currentlyPlaying: [],
-      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-    };
+  if (isGameOver(state)) {
+    return getDefaultWinner(state);
   }
 
   const chosen = randomChoice(state.currentlyPlaying);

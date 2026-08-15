@@ -1,5 +1,69 @@
 // For modules that are commonly used between different types of simulators, i.e. CHALLENGES, TEAM SWAPS, etc.
 import { randomChoice, randomInt, rollPass } from "./utils";
+import { useSimStore } from "../store/simulationStore";
+
+export function isGameOver(state) {
+  return state.currentlyPlaying.length <= 1;
+}
+
+//Default Finale
+//Input: Gamestate, Custom Ending Message
+export function getDefaultWinner(state, customMessage) {
+    const { logEvent } = useSimStore.getState();
+
+    const soleSurvivor = state.currentlyPlaying.length === 0
+    ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
+    : state.currentlyPlaying[0];
+
+    logEvent({ type: 'header', label: 'Winner' })
+    logEvent({ type: 'system', message: customMessage ?? `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
+
+    return {
+    ...state,
+    winner: soleSurvivor || null,
+    currentlyPlaying: [],
+    eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
+};
+}
+
+// Standardized Challenge Function: groups or individual players are represented in arrays
+// Parameters: challenge name, competing group array
+export function getChallengeResults(challengeName, groups) {
+    const scores = groups.map(group =>
+      group.reduce((sum, player) => sum +
+    challenge(challengeName, player), 0)
+    );
+
+    // Calculate who has the most points and who has the least
+    const ranking = scores
+      .map((score, index) => ({ score, index }))
+      .sort((a, b) => b.score - a.score);
+
+    const placements = ranking.map(r => r.index);
+    const results = ranking.map(r => r.score);
+
+    // Return to the main function an array with team placements based on index, and their scores in the challenge
+    console.log([placements, results])
+    return [placements, results];
+}
+
+// Challenge FFA: all athletes compete, placements and scores returned
+// Parameters: challenge name, competing player array
+export function getIndvChallengeResults(challengeName, athletes) {
+    const scores = athletes.map(p => challenge(challengeName, p));
+
+    // Calculate who has the most points and who has the least
+    const ranking = scores
+      .map((score, index) => ({ score, index }))
+      .sort((a, b) => b.score - a.score);
+
+    const placements = ranking.map(r => r.index);
+    const results = ranking.map(r => r.score);
+
+    // Return to the main function an array with team placements based on index, and their scores in the challenge
+    console.log([placements, results])
+    return [placements, results];
+}
 
 //Challenge: takes challenge name and player object, returns earned points based on player stats
 export function challenge(challenge, player) {

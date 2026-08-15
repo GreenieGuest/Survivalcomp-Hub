@@ -1,4 +1,5 @@
 import { randomChoice, randomInt } from "./utils";
+import { isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
 export function initialize_MI(players, config) {
@@ -21,7 +22,9 @@ export function initialize_MI(players, config) {
   };
 }
 
-export function FF_MI(state, playerList, config) { // repeat murderIsland until winner
+// Default Fast-Forward Function (it wasn't easy getting this to work)
+// Replace "MI" with a 2-character code of your choice
+export function FF_MI(state, playerList, config) {
   if (!state || state.winner) {
     if (playerList.length === 0) {
       return state; // prevent game breaking
@@ -40,21 +43,11 @@ export function murderIsland(state) {
   const { logEvent, clearEvents } = useSimStore.getState();
 
   // Default Finale Block
-  if (state.currentlyPlaying.length <= 1) {
-      const soleSurvivor = state.currentlyPlaying.length === 0
-        ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
-        : state.currentlyPlaying[0];
-
-      logEvent({ type: 'header', label: 'Winner' })
-      logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
-
-      return {
-      ...state,
-      winner: soleSurvivor || null,
-      currentlyPlaying: [],
-      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-    };
+  if (isGameOver(state)) {
+    return getDefaultWinner(state);
   }
+
+  // DoYaThing here
 
   return {
       ...state,

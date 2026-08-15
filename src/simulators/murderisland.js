@@ -1,4 +1,5 @@
 import { randomChoice, randomInt } from "./utils";
+import { isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
 const clues = ["Black","Blonde","Brunette","Ginger",
@@ -64,20 +65,11 @@ export function murderIsland(state) {
     const { logEvent, clearEvents } = useSimStore.getState();
 
     // Default Finale Block
-    if (state.currentlyPlaying.length <= 1) {
-        const soleSurvivor = state.currentlyPlaying.length === 0
-          ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
-          : state.currentlyPlaying[0];
-
-        logEvent({ type: 'header', label: 'Winner' })
-        logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} is the sole survivor of Murder Island.` })
-
-        return {
-        ...state,
-        winner: soleSurvivor || null,
-        currentlyPlaying: [],
-        eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-      };
+    if (isGameOver(state)) {
+      const soleSurvivor = state.currentlyPlaying.length === 0
+        ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
+        : state.currentlyPlaying[0];
+      return getDefaultWinner(state, `${soleSurvivor?.name ?? 'No one'} is the sole survivor of Murder Island.`);
     }
 
     const murderer = randomChoice(state.currentlyPlaying);

@@ -1,5 +1,5 @@
 import { randomChoice } from "./utils";
-import { challenge } from "./modules";
+import { getIndvChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
 function getBasePoints(numPlayers, distribution) {
@@ -28,25 +28,6 @@ function getPoints(player) {
     return player.points;
 }
 
-// Challenge FFA: all athletes compete, placements and scores returned
-// Parameters: challenge name, competing player array
-// In the future: The Ultimate Showdown...
-function getChallengeResults(challengeName, athletes) {
-    const scores = athletes.map(p => challenge(challengeName, p));
-
-    // Calculate who has the most points and who has the least
-    const ranking = scores
-      .map((score, index) => ({ score, index }))
-      .sort((a, b) => b.score - a.score);
-
-    const placements = ranking.map(r => r.index);
-    const results = ranking.map(r => r.score);
-
-    // Return to the main function an array with team placements based on index, and their scores in the challenge
-    console.log([placements, results])
-    return [placements, results];
-}
-
 function elimination(athletes, challengeName) {
     console.log(athletes);
     // find eliminated player
@@ -62,7 +43,7 @@ function elimination(athletes, challengeName) {
           console.log("Tiebreaker between " + tiebreaker_group.map(p => p.name).join(", ") + " with " + lowestScorer.points + " points.");
 
           // Run the tiebreaker challenge
-          let [placements, scores] = getChallengeResults(challengeName, tiebreaker_group);
+          let [placements, scores] = getIndvChallengeResults(challengeName, tiebreaker_group);
           var worst_score = Math.min(...scores);
           // If a tie happened within the Duel/3Duel, do another tiebreaker with the contestants who got the worst score
           tiebreaker_group = tiebreaker_group.filter((p, index) => scores[index] === worst_score);
@@ -131,20 +112,8 @@ export function algicosathlon(state) {
   const { logEvent, clearEvents } = useSimStore.getState();
 
   // win conditions (proper finale to be added later)
-  if (state.currentlyPlaying.length <= 1) {
-      const soleSurvivor = state.currentlyPlaying.length === 0
-        ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
-        : state.currentlyPlaying[0];
-
-      logEvent({ type: 'header', label: 'Winner' })
-      logEvent({ type: 'system', message: `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
-
-      return {
-      ...state,
-      winner: soleSurvivor || null,
-      currentlyPlaying: [],
-      eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
-    };
+  if (isGameOver(state)) {
+    return getDefaultWinner(state);
   }
 
   const base_points = state.base_points;
@@ -159,7 +128,7 @@ export function algicosathlon(state) {
 
   // Placements: Players sorted by score, value is their ID
   // Scores: Players sorted by ID, value is their score
-	let [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying);
+	let [placements, scores] = getIndvChallengeResults(challengeName, state.currentlyPlaying);
   const results = [];
 
   for (let x = 0; x < placements.length; x++) {

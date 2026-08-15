@@ -1,5 +1,5 @@
 import { randomChoice, randomSample } from "./utils";
-import { challenge } from "./modules";
+import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
 // constants
@@ -33,55 +33,12 @@ function assignTeams(players, numTeams) {
   return teams;
 }
 
-function getChallengeResults(challengeName, groups) {
-    const scores = groups.map(group =>
-      group.reduce((sum, player) => sum +
-    challenge(challengeName, player), 0)
-    );
-
-    // Calculate who has the most points and who has the least
-    const ranking = scores
-      .map((score, index) => ({ score, index }))
-      .sort((a, b) => b.score - a.score);
-
-    const placements = ranking.map(r => r.index);
-    const results = ranking.map(r => r.score);
-
-    // Return to the main function an array with team placements based on index, and their scores in the challenge
-    console.log([placements, results])
-    return [placements, results];
-}
-
 function elimination(players, immuneId = null) {
   const eligible = immuneId
     ? players.filter(p => p.id !== immuneId)
     : players;
 
   return randomChoice(eligible);
-}
-
-function isGameOver(state) {
-  return state.currentlyPlaying.length <= 1;
-}
-
-function finale(state) {
-  const { logEvent } = useSimStore.getState();
-
-  const winner = state.currentlyPlaying.length === 0 && state.eliminated.length > 0
-    ? state.eliminated.at(-1)
-    : state.currentlyPlaying[0] || null;
-
-  logEvent({ type: 'header', label: 'Winner' });
-  logEvent({ type: 'system', message: `${winner ? winner.name : 'No one'} wins! Press 'Start Game' to simulate again.` });
-
-  return {
-    ...state,
-    winner,
-    currentlyPlaying: [],
-    eliminated: winner
-      ? [...state.eliminated, winner]
-      : state.eliminated,
-  };
 }
 
 function updatePhase(state) {
@@ -180,7 +137,7 @@ function teamRound(state, challengeName) {
 
 function mergeRound(state, challengeName) {
   const { logEvent } = useSimStore.getState();
-  
+
   // each player is its own 'party'
   const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
   
@@ -254,7 +211,7 @@ export function FF_SV(state, playerList, config) { // repeat teams vote game unt
 
 export function survivor(state) {
   if (isGameOver(state)) {
-    return finale(state);
+    return getDefaultWinner(state);
   }
 
   let updatedState = updatePhase(state);
