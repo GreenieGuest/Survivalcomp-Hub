@@ -1,6 +1,7 @@
 import { randomChoice, randomSample } from "./utils";
 import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
+import default_teams from "../constants/defaultTeams";
 
 // constants
 
@@ -165,10 +166,7 @@ export function initialize_SV(players, config) {
   // Returns a state that will be modified as the simulation goes on.
   
   const startingTeams = Array.from({ length: config.startingTeams }, (_, i) =>
-    config.teamInfo?.[i] ? {...config.teamInfo[i]} : {
-      name: `Team ${i+1}`,
-      color: "#FFFFFF"
-    }
+    config.teamInfo?.[i] ? {...config.teamInfo[i]} : randomChoice(default_teams)
   );
   
   return {
