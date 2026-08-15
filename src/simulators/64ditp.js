@@ -1,6 +1,7 @@
 import { randomChoice, randomSample } from "./utils";
 import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
+import voteOut from "./votingLogic";
 import default_teams from "../constants/defaultTeams";
 
 // constants
@@ -34,18 +35,10 @@ function assignTeams(players, numTeams) {
   return teams;
 }
 
-function elimination(players, immuneId = null) {
-  const eligible = immuneId
-    ? players.filter(p => p.id !== immuneId)
-    : players;
-
-  return randomChoice(eligible);
-}
-
 function updatePhase(state) {
   const { logEvent } = useSimStore.getState();
   let { currentlyPlaying, castSize, teams } = state;
-  let mergeThreshold = (state.config.mergeThreshold ? state.config.mergeThreshold : Math.floor(castSize / 2))
+  let mergeThreshold = state.config.mergeThreshold ?? Math.floor(castSize / 2);
 
   // Initial team assignment
   if (currentlyPlaying.length === castSize) {
@@ -57,7 +50,7 @@ function updatePhase(state) {
   }
 
   // Merge condition (Must be checked before swap or swap will override)
-  if (currentlyPlaying.length == mergeThreshold) {
+  if (currentlyPlaying.length === mergeThreshold) {
     logEvent({ type: 'header', label: 'Merge' });
     logEvent({ type: 'system', message: 'The tribes have merged! Individual immunity is now in play.' });
     return {
@@ -67,7 +60,7 @@ function updatePhase(state) {
   }
 
   // Swap condition
-  if (state.quarter != PHASES.MERGE && state.quarter != PHASES.MERGATORY &&
+  if (state.quarter !== PHASES.MERGE && state.quarter !== PHASES.MERGATORY &&
     (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
   )
     {
@@ -120,7 +113,7 @@ function teamRound(state, challengeName) {
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
   logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` });
 
-  const eliminatedPlayer = elimination(losingTeam);
+  const { eliminated: eliminatedPlayer, voteLog } = voteOut(losingTeam, losingTeam, state.currentlyPlaying.length)
   logEvent({ type: 'header', label: 'General Meeting' });
   logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
@@ -140,21 +133,27 @@ function mergeRound(state, challengeName) {
   const { logEvent } = useSimStore.getState();
 
   // each player is its own 'party'
-  const [placements] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
+  const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
   
   const immunePlayer = state.currentlyPlaying[placements[0]];
-  const eliminatedPlayer = elimination(state.currentlyPlaying.filter(p => p.id !== immunePlayer.id));
+  const updatedImmune = { ...immunePlayer, notoriety: (immunePlayer.notoriety ?? 0) + 1 };
 
   logEvent({ type: 'header', label: 'Immunity Challenge' });
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
   logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` });
+  
+  const nominated = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
+  const { eliminated: eliminatedPlayer, voteLog } = voteOut(nominated, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id]);
+  
   logEvent({ type: 'header', label: 'General Meeting' });
   logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
   return {
     ...state,
     turn: state.turn + 1,
-    currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== eliminatedPlayer.id),
+    currentlyPlaying: state.currentlyPlaying
+      .filter(p => p.id !== eliminatedPlayer.id)
+      .map(p => p.id === immunePlayer.id ? updatedImmune : p),
     eliminated: [...state.eliminated, eliminatedPlayer],
   }
 }
@@ -180,6 +179,7 @@ export function initialize_SV(players, config) {
     winner: null,
     quarter: PHASES.START,
     currentlyPlaying: players.map(p => ({...p,
+      notoriety: 0,   // threat level
       faction: null,
       idols: []
     })),

@@ -1,7 +1,19 @@
 import { randomInt, randomChoice } from "./utils";
 
+export function physScope(player) {
+    return randomInt(1, player.str);
+}
+
 export function stratScope(player) {
     return randomInt(1, player.int);
+}
+
+export function socScope(player) {
+    return randomInt(1, player.soc);
+}
+
+export function notorietyScope(player) {
+    return randomInt(0, player.notoriety ?? 0);
 }
 
 // Vote Weight Calculation for individual voters
@@ -100,7 +112,7 @@ function fireMakingChallenge(player1, player2) { // The ultimate test.
     return loser; // returns the eliminated player
 }
 
-function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
+export default function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     const safeIds = [...immuneIds];
     let currentNominated = [...nominated];
     let currentVotingPool = [...votingPool];
