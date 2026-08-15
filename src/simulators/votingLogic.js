@@ -107,7 +107,7 @@ function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     const voteLog = []; // To be used in the future for The Voting Notation
 
     // First Voting Pass
-    let votes = voteRound(currentNominated, currentVotingPool);
+    let votes = castVotes(currentNominated, currentVotingPool);
     voteLog.push({ round: 'vote', tally: currentNominated.map((p, i) => ({ player: { ...p }, votes: votes[i] })) });
 
     const maxVotes = Math.max(...votes);
@@ -121,15 +121,15 @@ function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     // If they do, re-vote - tied people are removed from the voting pool and are the only choices available to vote for
     const tiedPlayers = tiedIndices.map(i => currentNominated[i]);
     if (playersRemaining === 4 && tiedPlayers.length === 2) {
-        // Fire making is handled by the caller since it needs logEvent
-        return { eliminated: null, tiedPlayers, voteLog, firemaking: true };
+        const F4FM_result = fireMakingChallenge(tiedPlayers[0], tiedPlayers[1])
+        return { eliminated: F4FM_result, voteLog };
     }
 
     // Second Voting Pass
     currentNominated = tiedPlayers;
     currentVotingPool = votingPool.filter(p => !tiedPlayers.find(t => t.id === p.id));
 
-    let revotes = voteRound(currentNominated, currentVotingPool);
+    let revotes = castVotes(currentNominated, currentVotingPool);
     voteLog.push({ round: 'revote', tally: currentNominated.map((p, i) => ({ player: { ...p }, votes: revotes[i] })) });
 
     const maxRevotes = Math.max(...revotes);
@@ -140,7 +140,7 @@ function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     }
 
     // If votes tied twice, players go to rocks - players immune but in the voting pool are spared, along with tied players
-    const eliminated = rocksElimination(tiedPlayers, votingPool, safeIds);
+    const eliminated = drawRocks(tiedPlayers, votingPool, safeIds);
     voteLog.push({ round: 'rocks', eliminated: { ...eliminated } });
 
     return { eliminated, voteLog };
