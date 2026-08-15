@@ -41,7 +41,7 @@ export function banRoulette(state) {
   // Every round... pick one random player to be eliminated.
   // (The most simple of survivalcomps)
 
-  const { logEvent, clearEvents } = useSimStore.getState();
+  const { logEvent } = useSimStore.getState();
 
   // Default Finale Block
   if (isGameOver(state)) {
@@ -49,7 +49,7 @@ export function banRoulette(state) {
   }
 
   const chosen = randomChoice(state.currentlyPlaying);
-  var roulette = randomInt(1,state.barrel);
+  let roulette = randomInt(1,state.barrel);
 
   if (roulette == 1) {
     logEvent({

@@ -1,4 +1,4 @@
-import { randomChoice, randomInt } from "./utils";
+import { randomChoice } from "./utils";
 import { isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
 
@@ -62,7 +62,7 @@ export function FF_MI(state, playerList, config) { // repeat murderIsland until 
 }
 
 export function murderIsland(state) {
-    const { logEvent, clearEvents } = useSimStore.getState();
+  const { logEvent } = useSimStore.getState();
 
     // Default Finale Block
     if (isGameOver(state)) {
@@ -92,7 +92,7 @@ export function murderIsland(state) {
     const fakeClue2 = randomChoice(clues.filter(c => !murderer.clues.includes(c) && c !== fakeClue1));
 
     const potentialSuspects = state.currentlyPlaying.filter(p => p.id !== victim.id && p.clues.includes(realClue1) && (p.clues.includes(realClue2) || p.clues.includes(fakeClue1) || p.clues.includes(fakeClue2)))
-    const voters = state.currentlyPlaying.filter(p =>  p.id !== victim.id && !potentialSuspects.includes(p));
+    // const voters = state.currentlyPlaying.filter(p =>  p.id !== victim.id && !potentialSuspects.includes(p));
 
     const executed = randomChoice(potentialSuspects);
 

@@ -27,7 +27,7 @@ const Config = ({ config, setConfig }) => {
     };
     const [mergeThreshold, setMergeThreshold] = useState(null);
 
-    const [teamInfo, setTeamInfo] = useState([]);
+    // const [teamInfo, setTeamInfo] = useState([]);
 
     const challengeModuses = createListCollection({
     items: [

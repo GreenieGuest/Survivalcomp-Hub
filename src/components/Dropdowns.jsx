@@ -4,7 +4,7 @@ import { MdOutlineLeaderboard } from "react-icons/md";
 import { RiKnifeBloodLine } from "react-icons/ri";
 import { GiSoccerBall } from "react-icons/gi";
 
-const SimulationSelector = ({ simulation, setSimulation }) => {
+const SimulationSelector = ({ setSimulation }) => {
 
   const simulations = createListCollection({
     items: [
@@ -50,7 +50,7 @@ const SimulationSelector = ({ simulation, setSimulation }) => {
   )
 };
 
-const MetricSelector = ({ statMetric, setStatMetric }) => {
+const MetricSelector = ({ setStatMetric }) => {
     // separate because it will have sim-specific metrics later
 
     const metrics = createListCollection({
@@ -93,7 +93,7 @@ const MetricSelector = ({ statMetric, setStatMetric }) => {
         )
     };
 
-const MiscSelector = ({ options, title, state, setState }) => {
+const MiscSelector = ({ options, title, setState }) => {
   // Input will only accept options that have ALREADY GONE THROUGH createListCollection
 
         return (

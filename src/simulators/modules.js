@@ -1,5 +1,5 @@
 // For modules that are commonly used between different types of simulators, i.e. CHALLENGES, TEAM SWAPS, etc.
-import { randomChoice, randomInt, rollPass } from "./utils";
+import { randomInt, rollPass } from "./utils";
 import { useSimStore } from "../store/simulationStore";
 
 export function isGameOver(state) {
@@ -131,80 +131,96 @@ export function challenge(challenge, player) {
             }
             break;
         // Endurance category
-        case "Maxing":
-            var playerRoll = 1;
+        case "Maxing": {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.str);
                 earnedPoints += 1;
             }
             break;
-        case "The FitnessGram Pacer Test":
-            var playerRoll = 1;
+        }
+        case "The FitnessGram Pacer Test": {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.dex);
                 earnedPoints += 1;
             }
             break;
-        case "The ASCI Spelling Bee":
-            var playerRoll = 1;
+        }
+        case "The ASCI Spelling Bee": {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.int);
                 earnedPoints += 1;
             }
             break;
+        }
         // Multiplication category
-        case "Pole Vault":
-            var playerRoll1 = randomInt(1, player.str);
-            var playerRoll2 = randomInt(1, player.dex);
+        case "Pole Vault": {
+            let playerRoll1 = randomInt(1, player.str);
+            let playerRoll2 = randomInt(1, player.dex);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Juggling":
-            var playerRoll1 = randomInt(1, player.dex);
-            var playerRoll2 = randomInt(1, player.int);
+        {
+            let playerRoll1 = randomInt(1, player.dex);
+            let playerRoll2 = randomInt(1, player.int);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Robot Takedown":
-            var playerRoll1 = randomInt(1, player.str);
-            var playerRoll2 = randomInt(1, player.int);
+        {
+            let playerRoll1 = randomInt(1, player.str);
+            let playerRoll2 = randomInt(1, player.int);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Mechanical Bull":
-            var playerRoll1 = randomInt(1, player.str);
-            var playerRoll2 = randomInt(1, player.dex);
-            var playerRoll3 = randomInt(1, player.int);
+        {
+            let playerRoll1 = randomInt(1, player.str);
+            let playerRoll2 = randomInt(1, player.dex);
+            let playerRoll3 = randomInt(1, player.int);
             earnedPoints = (playerRoll1 * playerRoll2 * playerRoll3);
             break;
+        }
         case "Shot Put": // Most complex challenge of IwS
-            var strRoll1 = randomInt(1, player.str);
-            var strRoll2 = randomInt(1, player.str);
-            var dexRoll1 = randomInt(1, player.dex);
-            var dexRoll2 = randomInt(1, player.dex);
-            var intRoll = randomInt(1, player.int);
-            var intPoints = 0;
+        {
+            let strRoll1 = randomInt(1, player.str);
+            let strRoll2 = randomInt(1, player.str);
+            let dexRoll1 = randomInt(1, player.dex);
+            let dexRoll2 = randomInt(1, player.dex);
+            let intRoll = randomInt(1, player.int);
+            let intPoints = 0;
             while (intRoll > 0) {
                 intRoll = randomInt(0, player.int);
                 intPoints += 1;
             }
             earnedPoints = (strRoll1 + strRoll2) + (dexRoll1 * dexRoll2) + intPoints;
             break;
+        }
         case "Dogfighting": // Multiplication of additions
-            var strRoll1 = randomInt(1, player.str);
-            var strRoll2 = randomInt(1, player.str);
-            var dexRoll1 = randomInt(1, player.dex);
-            var dexRoll2 = randomInt(1, player.dex);
-            var intRoll1 = randomInt(1, player.int);
-            var intRoll2 = randomInt(1, player.int);
+        {
+            let strRoll1 = randomInt(1, player.str);
+            let strRoll2 = randomInt(1, player.str);
+            let dexRoll1 = randomInt(1, player.dex);
+            let dexRoll2 = randomInt(1, player.dex);
+            let intRoll1 = randomInt(1, player.int);
+            let intRoll2 = randomInt(1, player.int);
             earnedPoints = (strRoll1 + strRoll2) * (dexRoll1 + dexRoll2) * (intRoll1 + intRoll2);
             break;
+        }
         case "Triathalon": // Addition of multiplications
-            var strRoll1 = randomInt(1, player.str);
-            var strRoll2 = randomInt(1, player.str);
-            var dexRoll1 = randomInt(1, player.dex);
-            var dexRoll2 = randomInt(1, player.dex);
-            var intRoll1 = randomInt(1, player.int);
-            var intRoll2 = randomInt(1, player.int);
+        {
+            let strRoll1 = randomInt(1, player.str);
+            let strRoll2 = randomInt(1, player.str);
+            let dexRoll1 = randomInt(1, player.dex);
+            let dexRoll2 = randomInt(1, player.dex);
+            let intRoll1 = randomInt(1, player.int);
+            let intRoll2 = randomInt(1, player.int);
             earnedPoints = (strRoll1 * strRoll2) + (dexRoll1 * dexRoll2) + (intRoll1 * intRoll2);
             break;
+        }
         case "Beat the AI": // Versus
             for (let x = 0; x < 10; x++) {
                 earnedPoints += rollPass(player.str, 6);
@@ -240,55 +256,69 @@ export function challenge(challenge, player) {
             }
             break;
         // Multiplication category
-        case "Physical":
-            var playerRoll1 = randomInt(1, player.str);
-            var playerRoll2 = randomInt(1, player.dex);
+        case "Physical": {
+            let playerRoll1 = randomInt(1, player.str);
+            let playerRoll2 = randomInt(1, player.dex);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Puzzle":
-            var playerRoll1 = randomInt(1, player.soc);
-            var playerRoll2 = randomInt(1, player.int);
+        {
+            let playerRoll1 = randomInt(1, player.soc);
+            let playerRoll2 = randomInt(1, player.int);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Obstacle Course":
-            var playerRoll1 = randomInt(1, player.dex);
-            var playerRoll2 = randomInt(1, player.int);
+        {
+            let playerRoll1 = randomInt(1, player.dex);
+            let playerRoll2 = randomInt(1, player.int);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         case "Coordination":
-            var playerRoll1 = randomInt(1, player.str);
-            var playerRoll2 = randomInt(1, player.soc);
+        {
+            let playerRoll1 = randomInt(1, player.str);
+            let playerRoll2 = randomInt(1, player.soc);
             earnedPoints = (playerRoll1 * playerRoll2);
             break;
+        }
         // Endurance category
-        case "Endurance (Strength)":
-            var playerRoll = 1;
+        case "Endurance (Strength)": {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.str);
                 earnedPoints += 1;
             }
             break;
+        }
         case "Endurance (Dexterity)":
-            var playerRoll = 1;
+        {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.dex);
                 earnedPoints += 1;
             }
             break;
+        }
         case "Memory":
-            var playerRoll = 1;
+        {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.int);
                 earnedPoints += 1;
             }
             break;
+        }
         case "Elimination":
-            var playerRoll = 1;
+        {
+            let playerRoll = 1;
             while (playerRoll > 0) {
                 playerRoll = randomInt(0, player.soc);
                 earnedPoints += 1;
             }
             break;
+        }
         // Sum combination
         case "Combination":
             for (let x = 0; x < 4; x++) {

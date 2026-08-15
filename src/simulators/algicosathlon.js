@@ -14,7 +14,7 @@ function getBasePoints(numPlayers, distribution) {
   }
   // otherwise do exponential method (most algicosathlons do this)
   const maxValue = 100
-  const minValue = 1 // to be configured later
+  // const minValue = 1 // to be configured later
 
   var ratio = maxValue ** (1/(numPlayers - 1));
   for (let i = 0; i < numPlayers; i++) {
@@ -35,22 +35,23 @@ function elimination(athletes, challengeName) {
 
     // check if there is a tie
     let lowestScorer = athletes[0];
+    let eliminated;
     if (athletes.length > 1) {
       let tiebreaker_group = athletes.filter(p => p.points === lowestScorer.points);
 
       // run a tiebreaker challenge if there is a tie ( Duel mechanic for future BOTS )
-      while (tiebreaker_group.length > 1) {
+        while (tiebreaker_group.length > 1) {
           console.log("Tiebreaker between " + tiebreaker_group.map(p => p.name).join(", ") + " with " + lowestScorer.points + " points.");
 
           // Run the tiebreaker challenge
-          let [placements, scores] = getIndvChallengeResults(challengeName, tiebreaker_group);
-          var worst_score = Math.min(...scores);
+          const [, scores] = getIndvChallengeResults(challengeName, tiebreaker_group);
+          let worst_score = Math.min(...scores);
           // If a tie happened within the Duel/3Duel, do another tiebreaker with the contestants who got the worst score
           tiebreaker_group = tiebreaker_group.filter((p, index) => scores[index] === worst_score);
-      }
-      var eliminated = tiebreaker_group[0];
+        }
+        eliminated = tiebreaker_group[0];
     } else {
-      var eliminated = lowestScorer;
+      eliminated = lowestScorer;
     }
 
     // sort by reverse for the leaderboard
@@ -109,7 +110,7 @@ export function algicosathlon(state) {
   // placements, gains and leaderboard are updated
   // athlete with the least points is eliminated
   // return state
-  const { logEvent, clearEvents } = useSimStore.getState();
+  const { logEvent } = useSimStore.getState();
 
   // win conditions (proper finale to be added later)
   if (isGameOver(state)) {

@@ -43,7 +43,7 @@ function elimination(players, immuneId = null) {
 
 function updatePhase(state) {
   const { logEvent } = useSimStore.getState();
-  let { currentlyPlaying, castSize, quarter, startingTeams, teams } = state;
+  let { currentlyPlaying, castSize, teams } = state;
   let mergeThreshold = (state.config.mergeThreshold ? state.config.mergeThreshold : Math.floor(castSize / 2))
 
   // Initial team assignment
@@ -107,7 +107,7 @@ function teamRound(state, challengeName) {
     randomSample(team, smallestTeamSize)
   );
 
-  const [placements, scores] = getChallengeResults(challengeName, participatingTeamMembers);
+  const [placements] = getChallengeResults(challengeName, participatingTeamMembers);
 
   const losingTeamIndex = placements.at(-1);
   console.log(losingTeamIndex)
@@ -139,7 +139,7 @@ function mergeRound(state, challengeName) {
   const { logEvent } = useSimStore.getState();
 
   // each player is its own 'party'
-  const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
+  const [placements] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
   
   const immunePlayer = state.currentlyPlaying[placements[0]];
   const eliminatedPlayer = elimination(state.currentlyPlaying.filter(p => p.id !== immunePlayer.id));

@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-refresh/only-export-components */
+
 import { ClientOnly, IconButton, Skeleton, Span } from '@chakra-ui/react'
 import { ThemeProvider, useTheme } from 'next-themes'
 

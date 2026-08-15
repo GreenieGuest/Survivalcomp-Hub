@@ -92,7 +92,7 @@ function App() {
   useEffect(() => {
     if (!gameState?.winner) return;
     applyGameResults(gameState);
-  }, [gameState]);
+  }, [gameState, applyGameResults]);
 
 
   //Collapsible sections for main app

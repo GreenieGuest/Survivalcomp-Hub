@@ -79,35 +79,28 @@ const PointsLeaderboard = ({ playerList, eliminatedList }) => {
 
 const PointsChart = ({ playerList, eliminatedList }) => {
     const lastEliminatedPlayer = eliminatedList[eliminatedList.length - 1];
+        const leaderboardPlayers = lastEliminatedPlayer ? [...playerList, lastEliminatedPlayer] : [...playerList];
 
-    var leaderboardPlayers = null;
-    if (lastEliminatedPlayer) {
-        leaderboardPlayers = [...playerList, lastEliminatedPlayer];
-    } else {
-        leaderboardPlayers = [...playerList];
-    }
+        const items = leaderboardPlayers.map((player, index) => ({
+                id: (index + 1)+suffix(index + 1),
+                name: player.name,
+                points: player.points,
+                color: player.color,
+                lastPlacement: player.lastPlacement
+        }));
 
-    if (playerList.length == 0 && eliminatedList.length == 0) {
-        return (
-        <p>No graph to display!</p>
-        )
-    }
-    
+        const chart = useChart({
+            data: items,
+            series: [
+                { name: "points", color: "yellow.solid", stackId: "a" },
+            ],
+        })
 
-    const items = leaderboardPlayers.map((player, index) => ({
-        id: (index + 1)+suffix(index + 1),
-        name: player.name,
-        points: player.points,
-        color: player.color,
-        lastPlacement: player.lastPlacement
-    }));
-
-      const chart = useChart({
-    data: items,
-    series: [
-      { name: "points", color: "yellow.solid", stackId: "a" },
-    ],
-  })
+        if (playerList.length === 0 && eliminatedList.length === 0) {
+            return (
+                <p>No graph to display!</p>
+            )
+        }
 
     return (
         <Container mt={4} centerContent>

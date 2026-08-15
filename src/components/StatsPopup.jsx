@@ -21,16 +21,8 @@ const StatsCell = ({currentProfile, setPlayerList}) => {
     const [int, setInt] = useState(String(currentProfile.int || 3));
     const [soc, setSoc] = useState(String(currentProfile.soc || 3));
 
-    //Sim-specific stats
-    const [clues, setClues] = useState(currentProfile.clues || []);
-
     //Used for popover
-    const [emptyMessage, setEmptyMessage] = useState(false);
     const [open, setOpen] = useState(false);
-
-    const handleTrackClick = async () => {
-        setOpen(false);
-    };
 
     return (
             <Popover.Root open={open} onOpenChange={(e) => setOpen(e.open)} lazyMount unmountOnExit>
