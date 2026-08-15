@@ -112,7 +112,7 @@ function fireMakingChallenge(player1, player2) { // The ultimate test.
     return loser; // returns the eliminated player
 }
 
-export default function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
+export function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     const safeIds = [...immuneIds];
     let currentNominated = [...nominated];
     let currentVotingPool = [...votingPool];
@@ -156,4 +156,29 @@ export default function voteOut(nominated, votingPool, playersRemaining, immuneI
     voteLog.push({ round: 'rocks', eliminated: { ...eliminated } });
 
     return { eliminated, voteLog };
+}
+
+export function juryVote(finalists, jury) {
+    const votes = new Array(finalists.length).fill(0);
+
+    for (const juror of jury) {
+        const weights = finalists.map(f => {
+            // Placeholder
+            let w = socScope(f) + (f.notoriety ?? 0);
+            return w;
+        });
+
+        const maxWeight = Math.max(...weights);
+        const topCandidates = finalists.filter((_, i) => weights[i] === maxWeight);
+        const votedFor = randomChoice(topCandidates);
+        votes[finalists.indexOf(votedFor)] += 1;
+    }
+
+    const maxVotes = Math.max(...votes);
+    const winner = finalists[votes.indexOf(maxVotes)];
+
+    return {
+        winner,
+        voteLog: finalists.map((f, i) => ({ player: { ...f }, votes: votes[i] }))
+    };
 }

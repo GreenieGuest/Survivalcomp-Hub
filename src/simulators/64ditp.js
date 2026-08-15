@@ -1,7 +1,7 @@
 import { randomChoice, randomSample } from "./utils";
 import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
-import voteOut from "./votingLogic";
+import { voteOut, juryVote } from "./votingLogic";
 import default_teams from "../constants/defaultTeams";
 
 // constants
@@ -155,9 +155,26 @@ function mergeRound(state, challengeName) {
       .filter(p => p.id !== eliminatedPlayer.id)
       .map(p => p.id === immunePlayer.id ? updatedImmune : p),
     eliminated: [...state.eliminated, eliminatedPlayer],
+    jury: [...state.jury, { ...eliminatedPlayer }],
   }
 }
 
+function juryFinale(state) {
+    const { logEvent } = useSimStore.getState();
+    const { winner, voteLog } = juryVote(state.currentlyPlaying, state.jury);
+
+    logEvent({ type: 'header', label: 'Final Tribal Council' });
+    logEvent({ type: 'juryVote', finalists: state.currentlyPlaying, voteLog });
+    logEvent({ type: 'header', label: 'Winner' });
+    logEvent({ type: 'system', message: `${winner.name} wins the game!` });
+
+    return {
+        ...state,
+        winner,
+        currentlyPlaying: [],
+        eliminated: [...state.eliminated, ...state.currentlyPlaying],
+    };
+}
 
 export function initialize_SV(players, config) {
   // Function called by the interface to create a simulation by importing player profiles (and in the future, configuration settings).
@@ -189,6 +206,7 @@ export function initialize_SV(players, config) {
 
     eliminated: [],
     challenges: [], // For the Ultimate Showdown
+    jury: [],
     //Sim-specific
   };
 }
@@ -210,6 +228,10 @@ export function FF_SV(state, playerList, config) { // repeat teams vote game unt
 export function survivor(state) {
   if (isGameOver(state)) {
     return getDefaultWinner(state);
+  }
+
+  if (state.quarter === PHASES.MERGE && state.currentlyPlaying.length <= 3) {
+    return juryFinale(state);
   }
 
   let updatedState = updatePhase(state);

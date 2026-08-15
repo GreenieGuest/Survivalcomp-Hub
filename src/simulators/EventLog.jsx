@@ -136,6 +136,24 @@ function EventEntry({event}) {
             </Box>
         )
     }
+    
+    if (event.type === "juryVote") {
+        return (
+            <Box>
+                <Text fontWeight="bold">Jury Vote</Text>
+                <Table.Root size="sm" mt={1}>
+                    <Table.Body>
+                        {event.voteLog.map((v, i) => (
+                            <Table.Row key={i}>
+                                <Table.Cell><Player player={v.player} /></Table.Cell>
+                                <Table.Cell>{v.votes} votes</Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table.Root>
+            </Box>
+        )
+    }
 
     if (Array.isArray(event)) {
         // Plain player-and-string event
