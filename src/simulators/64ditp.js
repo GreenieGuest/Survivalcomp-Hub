@@ -156,14 +156,15 @@ function teamRound(state, challengeName) {
   console.log(losingTeamIndex)
   console.log(participatingTeamMembers)
   const losingTeam = state.teams[losingTeamIndex];
+  const losingTeamInfo = state.teamInfo[losingTeamIndex];
 
   logEvent({ type: 'header', label: 'Immunity Challenge' });
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
-  logEvent({ type: 'system', message: `${losingTeam} loses the challenge and will have to vote someone out tonight.` });
+  logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` });
 
   const eliminatedPlayer = elimination(losingTeam);
   logEvent({ type: 'header', label: 'General Meeting' });
-  logEvent({ type: 'system', message: `${eliminatedPlayer} has been voted out..` });
+  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
   return {
     ...state,
@@ -178,6 +179,8 @@ function teamRound(state, challengeName) {
 }
 
 function mergeRound(state, challengeName) {
+  const { logEvent } = useSimStore.getState();
+  
   // each player is its own 'party'
   const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
   
@@ -186,9 +189,9 @@ function mergeRound(state, challengeName) {
 
   logEvent({ type: 'header', label: 'Immunity Challenge' });
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
-  logEvent({ type: 'system', message: `${immunePlayer} wins immunity! Everyone else will be at risk for being voted out tonight.` });
+  logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` });
   logEvent({ type: 'header', label: 'General Meeting' });
-  logEvent({ type: 'system', message: `${eliminatedPlayer} has been voted out..` });
+  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
   return {
     ...state,

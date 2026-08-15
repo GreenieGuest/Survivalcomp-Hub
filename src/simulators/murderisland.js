@@ -8,6 +8,8 @@ const clues = ["Black","Blonde","Brunette","Ginger",
 ]
 
 export function initialize_MI(players, config) {
+  const { logEvent } = useSimStore.getState();
+  
   // initialize game: all players added, random barrel position, # players printed
   const playerProfiles = players.map(p => (
         {...p,
