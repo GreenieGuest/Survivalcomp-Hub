@@ -121,6 +121,22 @@ function EventEntry({event}) {
         );
     }
 
+    if (event.type === "voteLog") {
+        return (
+            <Box>
+                {event.log.map((round, i) => (
+                    <Box key={i}>
+                        <Text fontWeight="bold" textTransform="capitalize">{round.round}</Text>
+                        {round.tally?.map((t, j) => (
+                            <Text key={j}><Player player={t.player} />: {t.votes} votes</Text>
+                        ))}
+                        {/*round.eliminated && <Text>Rocks: <Player player={round.eliminated} /> draws the white rock.</Text>*/}
+                    </Box>
+                ))}
+            </Box>
+        )
+    }
+
     if (Array.isArray(event)) {
         // Plain player-and-string event
         return (
