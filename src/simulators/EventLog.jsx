@@ -7,7 +7,7 @@ import { suffix } from "../simulators/utils"
 // differentiate by adding type
 
 function Player({ player }) {
-    return <span style={{ color: player.color, fontWeight: "bold" }}>{player.name}</span>;
+    return <span style={{ color: player.color, fontWeight: "bold" }}>{player.name}</span>; // {player.notoriety ? `(${player.notoriety})` : "(0)"}
 }
 
 function SectionHeader({ label }) {
@@ -121,26 +121,61 @@ function EventEntry({event}) {
         );
     }
 
-    if (event.type === "voteLog") {
+    if (event.type === "vote") {
+        const rounds = event.voteLog ?? event.log ?? [];
         return (
             <Box>
-                {event.log.map((round, i) => (
-                    <Box key={i}>
-                        <Text fontWeight="bold" textTransform="capitalize">{round.round}</Text>
-                        {round.tally?.map((t, j) => (
-                            <Text key={j}><Player player={t.player} />: {t.votes} votes</Text>
-                        ))}
-                        {/*round.eliminated && <Text>Rocks: <Player player={round.eliminated} /> draws the white rock.</Text>*/}
-                    </Box>
-                ))}
+                <Text fontWeight="bold">Vote Results</Text>
+                {rounds.map((round, i) => {
+                    if (round.round === 'vote' || round.round === 'revote') {
+                        const header = round.round === 'vote' ? 'Initial Vote' : 'Revote';
+                        return (
+                            <Box key={i} mt={1}>
+                                <Text fontWeight="semibold">{header}</Text>
+                                <Text color="fg.muted">I'll go tally the votes... if anyone has a Hidden Immunity Idol and you want to play it, now would be the time to do so.</Text>
+                                {round.tally?.map((t, j) => (
+                                    <Text key={j}><Player player={t.player} />: {t.votes} votes</Text>
+                                ))}
+                            </Box>
+                        )
+                    }
+
+                    if (round.round === 'rocks') {
+                        return (
+                            <Box key={i} mt={1}>
+                                <Text fontWeight="semibold">Rocks</Text>
+                                <Text><Player player={round.eliminated} /> drew the white rock and was eliminated.</Text>
+                            </Box>
+                        )
+                    }
+
+                    if (round.type === 'idol_play' || round.round === 'idol_play') {
+                        const p = round.player || round.player;
+                        const which = round.type === 'savior' ? 'Savior' : (round.type === 'guardian' ? 'Guardian Angel' : (round.type || 'Idol'));
+                        // Provide clearer flavor depending on idol type
+                        return (
+                            <Box key={i} mt={1}>
+                                <Text fontWeight="semibold">Idol Play</Text>
+                                <Text><Player player={p} /> played an idol: {round.type}.</Text>
+                            </Box>
+                        )
+                    }
+
+                    // Fallback render
+                    return (
+                        <Box key={i} mt={1}>
+                            <Text>{JSON.stringify(round)}</Text>
+                        </Box>
+                    )
+                })}
             </Box>
         )
     }
-    
+
     if (event.type === "juryVote") {
         return (
             <Box>
-                <Text fontWeight="bold">Jury Vote</Text>
+                <Text fontWeight="bold">Jury Duty</Text>
                 <Table.Root size="sm" mt={1}>
                     <Table.Body>
                         {event.voteLog.map((v, i) => (
@@ -172,37 +207,32 @@ function EventEntry({event}) {
     return null;
 }
 
-export default function EventLog() {
+export default function EventLog({gameState}) {
     const events = useSimStore(state => state.events)
+    const currentTurn = useSimStore(state => gameState?.turn ?? 0)
 
     if (!events || events.length === 0) return null;
 
-    // group events by turn
-    const byTurn = events.reduce((acc, event) => {
-        const t = event.turn ?? 0;
-        if (!acc[t]) acc[t] = [];
-        acc[t].push(event);
-        return acc;
-    }, {});
+    // Only show events for the current turn
+    const turnEvents = events.filter(e => (e.turn ?? 0) === currentTurn);
+    console.log(turnEvents)
 
     return (
         <VStack align="stretch" gap={0} mt={2}>
-            {Object.entries(byTurn).map(([turn, turnEvents]) => (
-                <Box key={turn}>
-                    <HStack my={3}>
-                        <Separator flex="1" borderColor="fg.subtle" />
-                        <Text fontSize="sm" color="fg.subtle" fontWeight="bold" flexShrink="0">
-                            DAY {turn}
-                        </Text>
-                        <Separator flex="1" borderColor="fg.subtle" />
-                    </HStack>
-                    <VStack align="stretch" gap={1} px={2}>
-                        {turnEvents.map((event, i) => (
-                            <EventEntry key={i} event={event} />
-                        ))}
-                    </VStack>
-                </Box>
-            ))}
+            <Box>
+                <HStack my={3}>
+                    <Separator flex="1" borderColor="fg.subtle" />
+                    <Text fontSize="sm" color="fg.subtle" fontWeight="bold" flexShrink="0">
+                        DAY {currentTurn}
+                    </Text>
+                    <Separator flex="1" borderColor="fg.subtle" />
+                </HStack>
+                <VStack align="stretch" gap={1} px={2}>
+                    {turnEvents.map((event, i) => (
+                        <EventEntry key={i} event={event} />
+                    ))}
+                </VStack>
+            </Box>
         </VStack>
     );
 }

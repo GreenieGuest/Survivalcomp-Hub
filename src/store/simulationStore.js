@@ -33,10 +33,13 @@ export const useSimStore = create(
         clearStats: () => set({ playerStats: {}, simCount: 0 }),
         setGameState: (gameState) => set({ gameState }),
 
+        turn: 0,
+        setTurn: (turn) => set({ turn }),
+
         // Events Handler
         events: [],
         logEvent: (event) => set(state => ({
-            events: [...state.events, { ...event, turn: state.gameState?.turn ?? 0 }]
+            events: [...state.events, { ...event, turn: state.turn ?? 0 }]
         })),
         clearEvents: () => set({ events: [] }),
     }),

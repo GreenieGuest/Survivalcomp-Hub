@@ -142,7 +142,7 @@ function App() {
         {gameState && <SimTabs gameState={gameState} />}
         
         {gameState && <Heading>Events</Heading>}
-        {gameState && <EventLog events={gameState.events} />}
+        {gameState && <EventLog gameState={gameState} />}
     </Container>
   );
 }
