@@ -1,7 +1,7 @@
 import { randomChoice, randomSample } from "./utils";
 import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
-import { voteOut, juryVote } from "./votingLogic";
+import { voteOut, juryVote, IDOL_TYPES } from "./votingLogic";
 import default_teams from "../constants/defaultTeams";
 
 // constants
@@ -113,8 +113,12 @@ function teamRound(state, challengeName) {
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
   logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` });
 
+  // Allow players a chance to find idols before the vote
+  state = attemptFindIdols(state, losingTeam);
+
   const { eliminated: eliminatedPlayer, voteLog } = voteOut(losingTeam, losingTeam, state.currentlyPlaying.length)
   logEvent({ type: 'header', label: 'General Meeting' });
+  logEvent({ type: 'vote', voteLog });
   logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
   return {
@@ -143,9 +147,14 @@ function mergeRound(state, challengeName) {
   logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` });
   
   const nominated = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
+
+  // Allow players a chance to find idols before the vote
+  state = attemptFindIdols(state, nominated);
+
   const { eliminated: eliminatedPlayer, voteLog } = voteOut(nominated, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id]);
   
   logEvent({ type: 'header', label: 'General Meeting' });
+  logEvent({ type: 'vote', voteLog });
   logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
 
   return {
@@ -242,4 +251,41 @@ export function survivor(state) {
   return withChallenge.quarter !== PHASES.MERGE
     ? teamRound(withChallenge, challengeName)
     : mergeRound(withChallenge, challengeName);
+}
+
+// Idol discovery: small chance each round for players (within the provided pool)
+function attemptFindIdols(state, pool) {
+  const { logEvent } = useSimStore.getState();
+  // probabilities
+  const HII_CHANCE = state.config?.hiiChance ?? 0.06; // 6%
+  const SUPER_CHANCE = state.config?.superChance ?? 0.01; // 1%
+
+  const updatedPlayers = state.currentlyPlaying.map(p => ({ ...p }));
+
+  for (const player of pool) {
+    const idx = updatedPlayers.findIndex(u => u.id === player.id);
+    if (idx === -1) continue;
+
+    // ensure idols array exists
+    updatedPlayers[idx].idols = updatedPlayers[idx].idols ?? [];
+
+    // skip if already has a super
+    if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.SUPER)) {
+      if (Math.random() < SUPER_CHANCE) {
+        updatedPlayers[idx].idols.push({ type: IDOL_TYPES.SUPER });
+        logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Super Idol!` });
+        console.log(`${updatedPlayers[idx].name} found a Super Idol!`);
+        continue; // skip HII if super found
+      }
+    }
+
+    // HII discovery
+    if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.HII) && Math.random() < HII_CHANCE) {
+      updatedPlayers[idx].idols.push({ type: IDOL_TYPES.HII });
+      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` });
+      console.log(`${updatedPlayers[idx].name} found a Hidden Immunity Idol!`);
+    }
+  }
+
+  return { ...state, currentlyPlaying: updatedPlayers };
 }

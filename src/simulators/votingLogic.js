@@ -1,5 +1,13 @@
 import { randomInt, randomChoice } from "./utils";
+import { useSimStore } from "../store/simulationStore";
 
+// Idol types
+export const IDOL_TYPES = {
+    SAVIOR: 'savior', // Savior: Played before the votes are read. Nullifies all votes for the target.
+    GUARDIAN_ANGEL: 'guardian', // Guardian Angel: Played AFTER the votes are read.
+    HII: 'hii', // Hidden Immunity Idol: Played after votes are cast but before read. Nullifies votes against holder.
+    SUPER: 'super', // Super Idol: Played after votes are read to nullify votes against holder and force re-evaluation.
+}
 export function physScope(player) {
     return randomInt(1, player.str);
 }
@@ -15,6 +23,14 @@ export function socScope(player) {
 export function notorietyScope(player) {
     return randomInt(0, player.notoriety ?? 0);
 }
+
+// ############################################
+// IDOL LOGIC
+// ############################################
+
+// ############################################
+// VOTING LOGIC
+// ############################################
 
 // Vote Weight Calculation for individual voters
 // Input: Votee, Voter
@@ -114,6 +130,7 @@ function fireMakingChallenge(player1, player2) { // The ultimate test.
 
 export function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
     const safeIds = [...immuneIds];
+    const { logEvent } = useSimStore.getState();
     let currentNominated = [...nominated];
     let currentVotingPool = [...votingPool];
     const voteLog = []; // To be used in the future for The Voting Notation
@@ -122,16 +139,69 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     let votes = castVotes(currentNominated, currentVotingPool);
     voteLog.push({ round: 'vote', tally: currentNominated.map((p, i) => ({ player: { ...p }, votes: votes[i] })) });
 
+    // --- Idol plays: Hidden Immunity Idol (HII) ---
+    // HII are played after votes are cast but BEFORE they're read. If a nominated player
+    // holds an HII and has one or more votes, they will play it to nullify those votes.
+    const idToIndex = Object.fromEntries(currentNominated.map((p, i) => [p.id, i]));
+    for (const player of currentNominated) {
+        if (!player.idols || player.idols.length === 0) continue;
+        const hiiIndex = player.idols.findIndex(idol => idol && idol.type === IDOL_TYPES.HII);
+        if (hiiIndex === -1) continue;
+        const idx = idToIndex[player.id];
+        if (votes[idx] > 0) {
+            // Play HII: nullify votes against this player
+            votes[idx] = 0;
+            // consume the idol
+            player.idols.splice(hiiIndex, 1);
+            safeIds.push(player.id);
+            voteLog.push({ round: 'idol_play', type: IDOL_TYPES.HII, player: { ...player } });
+            logEvent({ type: 'system', message: `${player.name} played a Hidden Immunity Idol! Votes against them are nullified.` });
+            console.log(`${player.name} played a Hidden Immunity Idol!`);
+        }
+    }
+
     const maxVotes = Math.max(...votes);
     const tiedIndices = votes.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
 
-    // If the votes don't tie, continue as normal
+    // --- Super Idol play: can be played AFTER votes are read to nullify votes for the top vote-getter ---
     if (tiedIndices.length === 1) {
-        return { eliminated: currentNominated[tiedIndices[0]], voteLog };
+        const topIdx = tiedIndices[0];
+        const topPlayer = currentNominated[topIdx];
+        if (topPlayer.idols && topPlayer.idols.length > 0) {
+            const superIndex = topPlayer.idols.findIndex(idol => idol && idol.type === IDOL_TYPES.SUPER);
+            if (superIndex !== -1) {
+                // Play Super Idol: nullify all votes against topPlayer and force re-evaluation
+                votes[topIdx] = 0;
+                topPlayer.idols.splice(superIndex, 1);
+                safeIds.push(topPlayer.id);
+                voteLog.push({ round: 'idol_play', type: IDOL_TYPES.SUPER, player: { ...topPlayer } });
+                logEvent({ type: 'system', message: `${topPlayer.name} played a Super Idol! Votes against them are nullified.` });
+                console.log(`${topPlayer.name} played a Super Idol!`);
+
+                // Recompute top after super idol is played
+                const newMax = Math.max(...votes);
+                const newTied = votes.map((v, i) => v === newMax ? i : -1).filter(i => i !== -1);
+                // If new result is a single eliminated, return immediately
+                if (newTied.length === 1) {
+                    return { eliminated: currentNominated[newTied[0]], voteLog };
+                }
+                // Otherwise, fall through to the tied/revote logic below using the new ties
+                // Update tiedIndices variable by overwriting (used later)
+                // Note: we don't reassign tiedIndices const; instead set a new variable used below
+                var postSuperTiedIndices = newTied;
+                var postSuperVotes = votes;
+            }
+        }
+    }
+
+    // If the votes don't tie, continue as normal
+    const effectiveTiedIndices = typeof postSuperTiedIndices !== 'undefined' ? postSuperTiedIndices : tiedIndices;
+    if (effectiveTiedIndices.length === 1) {
+        return { eliminated: currentNominated[effectiveTiedIndices[0]], voteLog };
     }
 
     // If they do, re-vote - tied people are removed from the voting pool and are the only choices available to vote for
-    const tiedPlayers = tiedIndices.map(i => currentNominated[i]);
+    const tiedPlayers = effectiveTiedIndices.map(i => currentNominated[i]);
     if (playersRemaining === 4 && tiedPlayers.length === 2) {
         const F4FM_result = fireMakingChallenge(tiedPlayers[0], tiedPlayers[1])
         return { eliminated: F4FM_result, voteLog };
@@ -144,11 +214,54 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     let revotes = castVotes(currentNominated, currentVotingPool);
     voteLog.push({ round: 'revote', tally: currentNominated.map((p, i) => ({ player: { ...p }, votes: revotes[i] })) });
 
+    // Revote: allow Hidden Immunity Idol plays again (same behavior)
+    const revIdToIndex = Object.fromEntries(currentNominated.map((p, i) => [p.id, i]));
+    for (const player of currentNominated) {
+        if (!player.idols || player.idols.length === 0) continue;
+        const hiiIndex = player.idols.findIndex(idol => idol && idol.type === IDOL_TYPES.HII);
+        if (hiiIndex === -1) continue;
+        const idx = revIdToIndex[player.id];
+        if (revotes[idx] > 0) {
+            revotes[idx] = 0;
+            player.idols.splice(hiiIndex, 1);
+            safeIds.push(player.id);
+            voteLog.push({ round: 'idol_play', type: IDOL_TYPES.HII, player: { ...player }, revote: true });
+            logEvent({ type: 'system', message: `${player.name} played a Hidden Immunity Idol on revote! Votes against them are nullified.` });
+            console.log(`${player.name} played a Hidden Immunity Idol on revote!`);
+        }
+    }
+
     const maxRevotes = Math.max(...revotes);
     const revoteTiedIndices = revotes.map((v, i) => v === maxRevotes ? i : -1).filter(i => i !== -1);
 
+    // Super Idol can also be played after revote read
     if (revoteTiedIndices.length === 1) {
-        return { eliminated: currentNominated[revoteTiedIndices[0]], voteLog };
+        const topIdx = revoteTiedIndices[0];
+        const topPlayer = currentNominated[topIdx];
+        if (topPlayer.idols && topPlayer.idols.length > 0) {
+            const superIndex = topPlayer.idols.findIndex(idol => idol && idol.type === IDOL_TYPES.SUPER);
+            if (superIndex !== -1) {
+                revotes[topIdx] = 0;
+                topPlayer.idols.splice(superIndex, 1);
+                safeIds.push(topPlayer.id);
+                voteLog.push({ round: 'idol_play', type: IDOL_TYPES.SUPER, player: { ...topPlayer }, revote: true });
+                logEvent({ type: 'system', message: `${topPlayer.name} played a Super Idol on revote! Votes against them are nullified.` });
+                console.log(`${topPlayer.name} played a Super Idol on revote!`);
+
+                const newMax = Math.max(...revotes);
+                const newTied = revotes.map((v, i) => v === newMax ? i : -1).filter(i => i !== -1);
+                if (newTied.length === 1) {
+                    return { eliminated: currentNominated[newTied[0]], voteLog };
+                }
+                var postSuperRevoteTied = newTied;
+            }
+        }
+    }
+
+    const effectiveRevoteTied = typeof postSuperRevoteTied !== 'undefined' ? postSuperRevoteTied : revoteTiedIndices;
+
+    if (effectiveRevoteTied.length === 1) {
+        return { eliminated: currentNominated[effectiveRevoteTied[0]], voteLog };
     }
 
     // If votes tied twice, players go to rocks - players immune but in the voting pool are spared, along with tied players
