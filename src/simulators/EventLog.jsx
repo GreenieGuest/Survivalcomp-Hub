@@ -213,8 +213,10 @@ export default function EventLog({gameState}) {
 
     if (!events || events.length === 0) return null;
 
+    console.log(events)
+
     // Only show events for the current turn
-    const turnEvents = events.filter(e => (e.turn ?? 0) === currentTurn);
+    const turnEvents = events.filter(e => (e.turn ?? 0) === currentTurn - 1);
     console.log(turnEvents)
 
     return (

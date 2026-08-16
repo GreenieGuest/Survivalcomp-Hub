@@ -38,9 +38,12 @@ export const useSimStore = create(
 
         // Events Handler
         events: [],
-        logEvent: (event) => set(state => ({
-            events: [...state.events, { ...event, turn: state.turn ?? 0 }]
-        })),
+        logEvent: (event) => {
+            const turn = get().turn
+            set(state => ({
+                events: [...state.events, { ...event, turn }]
+            }))
+        },
         clearEvents: () => set({ events: [] }),
     }),
     {
