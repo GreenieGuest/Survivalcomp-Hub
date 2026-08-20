@@ -24,6 +24,10 @@ export const useSimStore = create(
                 newStats[player.id] = {
                     ...prev,
                     wins: prev.wins + (gameState.castSize - index === 1 ? 1 : 0),
+                    podiums: prev.wins + (gameState.castSize - index < 4 ? 1 : 0),
+                    upperquartile: prev.wins + (gameState.castSize - index < gameState.castSize / 4 ? 1 : 0),
+                    tophalf: prev.wins + (gameState.castSize - index < gameState.castSize / 2 ? 1 : 0),
+                    lowerquartile: prev.wins + (gameState.castSize - index < 3 * gameState.castSize / 4 ? 1 : 0),
                     placements: [...prev.placements, gameState.castSize - index],
                 }
             });
