@@ -30,9 +30,9 @@ const StatsTable = ({ playerStatsList, sortByMetric }) => {
         winRate: player.wins / player.placements.length * 100,
         podiums: player.podiums,
         podiumRate: player.podiums / player.placements.length * 100,
-        upperquartile: player.upperquartile / player.placements.length * 100,
-        tophalf: player.tophalf / player.placements.length * 100,
-        lowerquartile: player.lowerquartile / player.placements.length * 100,
+        upperquartile: (player.upperquartile ?? 0) / player.placements.length * 100,
+        tophalf: (player.tophalf ?? 0) / player.placements.length * 100,
+        lowerquartile: (player.lowerquartile ?? 0) / player.placements.length * 100,
     }))
 
     if (sortByMetric === "winRate" || sortByMetric === "wins") {
@@ -46,6 +46,7 @@ const StatsTable = ({ playerStatsList, sortByMetric }) => {
 
     return (
         <Container >
+        <Table.ScrollArea borderWidth="1px" maxW="xl">
             <Table.Root size="sm">
             <Table.Header>
                 <Table.Row>
@@ -56,6 +57,7 @@ const StatsTable = ({ playerStatsList, sortByMetric }) => {
                 <Table.ColumnHeader textAlign="center">Max</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="center">Wins</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="center">Win Rate</Table.ColumnHeader>
+                <Table.ColumnHeader textAlign="center">Podiums</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="center">Podium Rate</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="center">Top 25%</Table.ColumnHeader>
                 <Table.ColumnHeader textAlign="center">Top 50%</Table.ColumnHeader>
@@ -72,6 +74,7 @@ const StatsTable = ({ playerStatsList, sortByMetric }) => {
                     <Table.Cell textAlign="center">{item.min}</Table.Cell>
                     <Table.Cell textAlign="center">{item.wins}</Table.Cell>
                     <Table.Cell textAlign="center">{item.winRate.toFixed(2)}%</Table.Cell>
+                    <Table.Cell textAlign="center">{item.podiums}</Table.Cell>
                     <Table.Cell textAlign="center">{item.podiumRate.toFixed(2)}%</Table.Cell>
                     <Table.Cell textAlign="center">{item.upperquartile.toFixed(2)}%</Table.Cell>
                     <Table.Cell textAlign="center">{item.tophalf.toFixed(2)}%</Table.Cell>
@@ -80,6 +83,7 @@ const StatsTable = ({ playerStatsList, sortByMetric }) => {
                 ))}
             </Table.Body>
             </Table.Root>
+        </Table.ScrollArea>
         </Container>
     )
 };
