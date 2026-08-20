@@ -1,5 +1,8 @@
 import { randomInt, randomChoice } from "./utils";
 import { useSimStore } from "../store/simulationStore";
+import default_factions from "../constants/defaultFactions";
+
+const { logEvent } = useSimStore.getState();
 
 // Idol types
 export const IDOL_TYPES = {
@@ -178,7 +181,7 @@ function fireMakingChallenge(player1, player2) { // The ultimate test.
 }
 
 export function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
-    const safeIds = [...immuneIds];
+    let safeIds = [...immuneIds];
     const { logEvent } = useSimStore.getState();
     let currentNominated = [...nominated];
     let currentVotingPool = [...votingPool];
@@ -208,11 +211,11 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     // If the votes don't tie, continue as normal
     if (tiedIndices.length === 1) {
         const elim = currentNominated[tiedIndices[0]];
-        return { eliminated: { ...elim, eliminatedBy: findEliminator(elim, votingPool) }, voteLog, updatedNominated: currentNominated };
+        return { eliminated: elim, voteLog, updatedNominated: currentNominated };
     }
 
     // If they do, re-vote - tied people are removed from the voting pool and are the only choices available to vote for
-    const tiedPlayers = effectiveTiedIndices.map(i => currentNominated[i]);
+    let tiedPlayers = tiedIndices.map(i => currentNominated[i]);
     if (playersRemaining === 4 && tiedPlayers.length === 2) {
         const F4FM_result = fireMakingChallenge(tiedPlayers[0], tiedPlayers[1])
         return { eliminated: F4FM_result, voteLog };
@@ -227,8 +230,8 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
 
     // do NOT allow hidden immunity idol plays in revotes
 
-    const maxRevotes = Math.max(...revotes);
-    const revoteTied = revotes.map((v, i) => v === maxRevotes ? i : -1).filter(i => i !== -1);
+    let maxRevotes = Math.max(...revotes);
+    let revoteTied = revotes.map((v, i) => v === maxRevotes ? i : -1).filter(i => i !== -1);
 
     // EVER
     // not even 64ditp works like that and it has crazy twists
@@ -267,4 +270,129 @@ export function juryVote(finalists, jury) {
         winner,
         voteLog: finalists.map((f, i) => ({ player: { ...f }, votes: votes[i] }))
     };
+}
+
+// ############################################
+// FACTION LOGIC
+// ############################################
+
+export function runCampEvents(players) {
+    let updatedPlayers = players.map(p => ({ ...p }));
+ 
+    for (let i = 0; i < updatedPlayers.length; i++) {
+        const player = updatedPlayers[i];
+        const event = rollCampEvent(player, updatedPlayers);
+        if (!event) continue;
+ 
+        // Apply state changes returned by the event
+        if (event.updatedPlayers) {
+            updatedPlayers = event.updatedPlayers;
+        }
+    }
+ 
+    return updatedPlayers;
+}
+
+function rollCampEvent(player, allPlayers) {
+    // Weight each possible event by relevant stat
+    const events = [
+        { weight: player.soc, fn: tryFormAlliance },
+        { weight: player.soc, fn: tryFractureAlliance },
+        { weight: player.int, fn: tryUpdateTarget },
+        { weight: Math.floor((player.str + player.dex) / 2), fn: tryPhysicalEvent },
+        { weight: player.soc, fn: trySocialEvent },
+        { weight: 1, fn: () => null }, // do nothing (idle)
+    ];
+ 
+    const total = events.reduce((sum, e) => sum + e.weight, 0);
+    let roll = randomInt(1, total);
+    for (const e of events) {
+        roll -= e.weight;
+        if (roll <= 0) return e.fn(player, allPlayers);
+    }
+    return null;
+}
+
+function tryFormAlliance(player, allPlayers) {
+    // Only high-soc players without a faction attempt to form one
+    if (player.faction) return null;
+    if (socScope(player) < Math.ceil(player.soc * 0.6)) return null;
+ 
+    const eligible = allPlayers.filter(p =>
+        p.id !== player.id && !p.faction && socScope(p) >= Math.ceil(p.soc * 0.4)
+    );
+    if (eligible.length === 0) return null;
+ 
+    const ally = randomChoice(eligible);
+    const factionId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const factionName = randomChoice(FACTION_NAMES);
+    const faction = { id: factionId, name: factionName, target: null };
+ 
+    logEvent({ type: 'allianceForm', leader: { ...player }, ally: { ...ally }, name: factionName });
+ 
+    return {
+        updatedPlayers: allPlayers.map(p => {
+            if (p.id === player.id || p.id === ally.id) return { ...p, faction };
+            return p;
+        })
+    };
+}
+
+function tryFractureAlliance(player, allPlayers) {
+    if (!player.faction) return null;
+    // Low-strat players may get cold feet
+    if (stratScope(player) >= Math.ceil(player.int * 0.4)) return null;
+ 
+    logEvent({ type: 'allianceFracture', player: { ...player }, factionName: player.faction.name });
+ 
+    return {
+        updatedPlayers: allPlayers.map(p =>
+            p.id === player.id ? { ...p, faction: null } : p
+        )
+    };
+}
+
+function tryUpdateTarget(player, allPlayers) {
+    if (!player.faction) return null;
+ 
+    // Pick the highest-notoriety outsider as the new target
+    const outsiders = allPlayers.filter(p => p.faction?.id !== player.faction.id);
+    if (outsiders.length === 0) return null;
+ 
+    const target = outsiders.reduce((top, p) =>
+        (p.notoriety ?? 0) > (top.notoriety ?? 0) ? p : top
+    );
+ 
+    // Update all faction members' target
+    return {
+        updatedPlayers: allPlayers.map(p =>
+            p.faction?.id === player.faction.id
+                ? { ...p, faction: { ...p.faction, target } }
+                : p
+        )
+    };
+}
+
+function tryPhysicalEvent(player, allPlayers) {
+    const events = [
+        `${player.name} goes for a morning run to stay sharp.`,
+        `${player.name} practices their strength in the camp.`,
+        `${player.name} finds a comfortable spot to rest and recover.`,
+    ];
+    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) });
+    return null;
+}
+ 
+function trySocialEvent(player, allPlayers) {
+    const others = allPlayers.filter(p => p.id !== player.id);
+    if (others.length === 0) return null;
+    const target = randomChoice(others);
+ 
+    const events = [
+        `${player.name} shares a meal with ${target.name}.`,
+        `${player.name} and ${target.name} have a long conversation by the fire.`,
+        `${player.name} checks in on ${target.name} to see how they're doing.`,
+    ];
+    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) });
+    return null;
 }
