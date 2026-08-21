@@ -42,7 +42,7 @@ function applyConsumedIdol(nominated, playerId, idolType) {
     return nominated.map(p => p.id === playerId ? consumeIdol(p, idolType) : p);
 }
 
-function resolveHII(nominated, votes, safeIds) {
+function resolveHII(nominated, votes, safeIds, turn) {
     let updatedNominated = [...nominated];
     let updatedVotes = [...votes];
     let updatedSafe = [...safeIds];
@@ -57,14 +57,14 @@ function resolveHII(nominated, votes, safeIds) {
             updatedVotes[idx] = 0;
             updatedNominated = applyConsumedIdol(updatedNominated, player.id, IDOL_TYPES.HII);
             updatedSafe = [...updatedSafe, player.id];
-            logEvent({ type: 'idolPlay', player: { ...player }, idolType: IDOL_TYPES.HII });
+            logEvent({ type: 'idolPlay', player: { ...player }, idolType: IDOL_TYPES.HII }, turn);
         }
     }
  
     return { votes: updatedVotes, nominated: updatedNominated, safeIds: updatedSafe };
 }
 
-function resolveSuper(nominated, votes, safeIds, topIdx) {
+function resolveSuper(nominated, votes, safeIds, topIdx, turn) {
     const topPlayer = nominated[topIdx];
     if (!topPlayer.idols?.find(i => i?.type === IDOL_TYPES.SUPER)) {
         return null; // no super idol, nothing to do
@@ -75,7 +75,7 @@ function resolveSuper(nominated, votes, safeIds, topIdx) {
     let updatedSafe = [...safeIds, topPlayer.id];
     updatedVotes[topIdx] = 0;
  
-    logEvent({ type: 'idolPlay', player: { ...topPlayer }, idolType: IDOL_TYPES.SUPER });
+    logEvent({ type: 'idolPlay', player: { ...topPlayer }, idolType: IDOL_TYPES.SUPER }, turn);
  
     return { votes: updatedVotes, nominated: updatedNominated, safeIds: updatedSafe };
 }
@@ -160,7 +160,7 @@ function drawRocks(tiedPlayers, votingPool, safeIds) {
     return randomChoice(eligible);
 }
 
-function fireMakingChallenge(player1, player2) { // The ultimate test.
+function fireMakingChallenge(player1, player2, turn) { // The ultimate test.
     // Mostly ripped from the spaghetti 64DITP F4FMC
     let p1Fire = 0;
     let p2Fire = 0;
@@ -175,14 +175,13 @@ function fireMakingChallenge(player1, player2) { // The ultimate test.
     const loser = p1Fire > p2Fire ? player2 : player1;
 
     // Notoriety in this case is being used to "build credibility" for the winner due to them winning F4FM
-    winner.notoriety = (winner.notoriety ?? 0) + 3;
-
-    return loser; // returns the eliminated player
+    const updatedWinner = { ...winner, notoriety: (winner.notoriety ?? 0) + 3 };
+    logEvent({ type: 'fireMaking', winner: updatedWinner, loser: { ...loser }, p1Score: p1Fire, p2Score: p2Fire }, turn);
+    return { loser, updatedWinner }; // return loser and updated winner
 }
 
-export function voteOut(nominated, votingPool, playersRemaining, immuneIds = []) {
+export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [], turn = 0) {
     let safeIds = [...immuneIds];
-    const { logEvent } = useSimStore.getState();
     let currentNominated = [...nominated];
     let currentVotingPool = [...votingPool];
     const voteLog = []; // To be used in the future for The Voting Notation
@@ -193,14 +192,14 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
 
     // Standard Hidden Immunity Idol Play
     // "If anybody has a Hidden Immunity Idol and you want to play it... now would be the time to do so."
-    ({ votes, nominated: currentNominated, safeIds } = resolveHII(currentNominated, votes, safeIds));
+    ({ votes, nominated: currentNominated, safeIds } = resolveHII(currentNominated, votes, safeIds, turn));
 
     let maxVotes = Math.max(...votes);
     let tiedIndices = votes.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
 
     // --- Super Idol play: can be played AFTER votes are read to nullify votes for the top vote-getter ---
     if (tiedIndices.length === 1) {
-        const superResult = resolveSuper(currentNominated, votes, safeIds, tiedIndices[0]);
+        const superResult = resolveSuper(currentNominated, votes, safeIds, tiedIndices[0], turn);
         if (superResult) {
             ({ votes, nominated: currentNominated, safeIds } = superResult);
             maxVotes = Math.max(...votes);
@@ -217,16 +216,17 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     // If they do, re-vote - tied people are removed from the voting pool and are the only choices available to vote for
     let tiedPlayers = tiedIndices.map(i => currentNominated[i]);
     if (playersRemaining === 4 && tiedPlayers.length === 2) {
-        const F4FM_result = fireMakingChallenge(tiedPlayers[0], tiedPlayers[1])
-        return { eliminated: F4FM_result, voteLog };
+        const { loser, updatedWinner } = fireMakingChallenge(tiedPlayers[0], tiedPlayers[1], turn);
+        voteLog.push({ round: 'firemaking' });
+        return { eliminated: { ...loser }, voteLog, updatedNominated: currentNominated, updatedWinner };
     }
 
     // Second Voting Pass
-    currentNominated = tiedPlayers;
-    currentVotingPool = votingPool.filter(p => !tiedPlayers.find(t => t.id === p.id));
+    let revoteNominated = tiedPlayers;
+    const revotePool = votingPool.filter(p => !tiedPlayers.find(t => t.id === p.id));
 
-    let revotes = castVotes(currentNominated, currentVotingPool);
-    voteLog.push({ round: 'revote', tally: currentNominated.map((p, i) => ({ player: { ...p }, votes: revotes[i] })) });
+    let revotes = castVotes(revoteNominated, revotePool);
+    voteLog.push({ round: 'revote', tally: revoteNominated.map((p, i) => ({ player: { ...p }, votes: revotes[i] })) });
 
     // do NOT allow hidden immunity idol plays in revotes
 
@@ -237,14 +237,14 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     // not even 64ditp works like that and it has crazy twists
 
     if (revoteTied.length === 1) {
-        return { eliminated: currentNominated[revoteTied[0]], voteLog };
+        return { eliminated: { ...revoteNominated[revoteTied[0]] }, voteLog, updatedNominated: currentNominated };
     }
 
     // If votes tied twice, players go to rocks - players immune but in the voting pool are spared, along with tied players
-    const eliminated = drawRocks(tiedPlayers, votingPool, safeIds);
+    const eliminated = drawRocks(tiedPlayers, currentVotingPool, safeIds);
     voteLog.push({ round: 'rocks', eliminated: { ...eliminated } });
 
-    return { eliminated, voteLog };
+    return { eliminated: { ...rocksElim }, voteLog, updatedNominated: currentNominated };
 }
 
 export function juryVote(finalists, jury) {
@@ -276,12 +276,12 @@ export function juryVote(finalists, jury) {
 // FACTION LOGIC
 // ############################################
 
-export function runCampEvents(players) {
+export function runCampEvents(players, turn) {
     let updatedPlayers = players.map(p => ({ ...p }));
  
     for (let i = 0; i < updatedPlayers.length; i++) {
         const player = updatedPlayers[i];
-        const event = rollCampEvent(player, updatedPlayers);
+        const event = rollCampEvent(player, updatedPlayers, turn);
         if (!event) continue;
  
         // Apply state changes returned by the event
@@ -293,27 +293,27 @@ export function runCampEvents(players) {
     return updatedPlayers;
 }
 
-function rollCampEvent(player, allPlayers) {
+function rollCampEvent(player, allPlayers, turn) {
     // Weight each possible event by relevant stat
     const events = [
         { weight: player.soc, fn: tryFormAlliance },
         { weight: player.soc, fn: tryFractureAlliance },
         { weight: player.int, fn: tryUpdateTarget },
-        { weight: Math.floor((player.str + player.dex) / 2), fn: tryPhysicalEvent },
+        { weight: Math.floor((player.str + (player.dex ?? 0)) / 2), fn: tryPhysicalEvent },
         { weight: player.soc, fn: trySocialEvent },
-        { weight: 1, fn: () => null }, // do nothing (idle)
+        { weight: 2, fn: () => null }, // do nothing (idle)
     ];
  
     const total = events.reduce((sum, e) => sum + e.weight, 0);
     let roll = randomInt(1, total);
     for (const e of events) {
         roll -= e.weight;
-        if (roll <= 0) return e.fn(player, allPlayers);
+        if (roll <= 0) return e.fn(player, allPlayers, turn);
     }
     return null;
 }
 
-function tryFormAlliance(player, allPlayers) {
+function tryFormAlliance(player, allPlayers, turn) {
     // Only high-soc players without a faction attempt to form one
     if (player.faction) return null;
     if (socScope(player) < Math.ceil(player.soc * 0.6)) return null;
@@ -325,10 +325,10 @@ function tryFormAlliance(player, allPlayers) {
  
     const ally = randomChoice(eligible);
     const factionId = `f_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const factionName = randomChoice(FACTION_NAMES);
+    const factionName = randomChoice(default_factions);
     const faction = { id: factionId, name: factionName, target: null };
  
-    logEvent({ type: 'allianceForm', leader: { ...player }, ally: { ...ally }, name: factionName });
+    logEvent({ type: 'allianceForm', leader: { ...player }, ally: { ...ally }, name: factionName }, turn);
  
     return {
         updatedPlayers: allPlayers.map(p => {
@@ -338,12 +338,12 @@ function tryFormAlliance(player, allPlayers) {
     };
 }
 
-function tryFractureAlliance(player, allPlayers) {
+function tryFractureAlliance(player, allPlayers, turn) {
     if (!player.faction) return null;
     // Low-strat players may get cold feet
     if (stratScope(player) >= Math.ceil(player.int * 0.4)) return null;
  
-    logEvent({ type: 'allianceFracture', player: { ...player }, factionName: player.faction.name });
+    logEvent({ type: 'allianceFracture', player: { ...player }, factionName: player.faction.name }, turn);
  
     return {
         updatedPlayers: allPlayers.map(p =>
@@ -352,7 +352,7 @@ function tryFractureAlliance(player, allPlayers) {
     };
 }
 
-function tryUpdateTarget(player, allPlayers) {
+function tryUpdateTarget(player, allPlayers, turn) {
     if (!player.faction) return null;
  
     // Pick the highest-notoriety outsider as the new target
@@ -373,17 +373,17 @@ function tryUpdateTarget(player, allPlayers) {
     };
 }
 
-function tryPhysicalEvent(player, allPlayers) {
+function tryPhysicalEvent(player, allPlayers, turn) {
     const events = [
         `${player.name} goes for a morning run to stay sharp.`,
         `${player.name} practices their strength in the camp.`,
         `${player.name} finds a comfortable spot to rest and recover.`,
     ];
-    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) });
+    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) }, turn);
     return null;
 }
  
-function trySocialEvent(player, allPlayers) {
+function trySocialEvent(player, allPlayers, turn) {
     const others = allPlayers.filter(p => p.id !== player.id);
     if (others.length === 0) return null;
     const target = randomChoice(others);
@@ -393,6 +393,6 @@ function trySocialEvent(player, allPlayers) {
         `${player.name} and ${target.name} have a long conversation by the fire.`,
         `${player.name} checks in on ${target.name} to see how they're doing.`,
     ];
-    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) });
+    logEvent({ type: 'campEvent', player: { ...player }, message: randomChoice(events) }, turn);
     return null;
 }

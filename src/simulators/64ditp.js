@@ -113,7 +113,6 @@ function syncUpdatedNominated(currentlyPlaying, updatedNominated) {
 
 // Idol discovery: small chance each round for players (within the provided pool)
 function attemptFindIdols(state, pool) {
-  const { logEvent } = useSimStore.getState();
   // probabilities
   const HII_CHANCE = state.config?.hiiChance ?? 0.06; // 6%
   const SUPER_CHANCE = state.config?.superChance ?? 0.01; // 1%
@@ -127,25 +126,26 @@ function attemptFindIdols(state, pool) {
     // ensure idols array exists
     updatedPlayers[idx].idols = updatedPlayers[idx].idols ?? [];
 
-    // skip if already has a super
+    // Super Idol
     if (Math.random() < SUPER_CHANCE) {
       updatedPlayers[idx] = {
         ...updatedPlayers[idx],
         idols: [...updatedPlayers[idx].idols, { type: IDOL_TYPES.SUPER }]
       };
       logEvent({ type: 'idolFind', player: { ...updatedPlayers[idx] }, idolType: IDOL_TYPES.SUPER }, state.turn);
-      continue; // skip HII roll if super found this attempt
+      continue;
     }
 
-    // HII discovery
+    // Normal Idol
     if (Math.random() < HII_CHANCE) {
       updatedPlayers[idx] = {
         ...updatedPlayers[idx],
         idols: [...updatedPlayers[idx].idols, { type: IDOL_TYPES.HII }]
       };
-      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` }, state.turn);
-      console.log(`${updatedPlayers[idx].name} found a Hidden Immunity Idol!`);
+      logEvent({ type: 'idolFind', player: { ...updatedPlayers[idx] }, idolType: IDOL_TYPES.HII }, state.turn);
     }
+
+    // Yes... you can find both types in one turn. how do you think rigged players are rigged
   }
 
   return { ...state, currentlyPlaying: updatedPlayers };
@@ -154,8 +154,6 @@ function attemptFindIdols(state, pool) {
 // LOGIC
 
 function teamRound(state, challengeName) {
-  const { logEvent } = useSimStore.getState();
-
   // Make things even by "sitting out" extra players if one team is bigger than another (Remove this in BOTS)
   let participatingTeamMembers = [...state.teams]
   const smallestTeamSize = Math.min(...participatingTeamMembers.map(a => a.length));
@@ -195,26 +193,26 @@ function teamRound(state, challengeName) {
   state = attemptFindIdols(state, losingTeam);
   const updatedLosingTeam = state.currentlyPlaying.filter(p => losingTeam.find(t => t.id === p.id));
 
-  const { eliminated: eliminatedPlayer, voteLog } = voteOut(updatedLosingTeam, updatedLosingTeam, state.currentlyPlaying.length, [], state.turn)
+  const { eliminated: eliminatedPlayer, voteLog, updatedNominated } = voteOut(updatedLosingTeam, updatedLosingTeam, state.currentlyPlaying.length, [], state.turn)
   logEvent({ type: 'header', label: 'General Meeting' }, state.turn);
   logEvent({ type: 'vote', voteLog }, state.turn);
-  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` }, state.turn);
+  logEvent({ type: 'svElim', eliminated: eliminatedPlayer, team: losingTeamInfo, remaining: state.currentlyPlaying.length - 1 }, state.turn);
+
+  const syncedPlaying = syncUpdatedNominated(state.currentlyPlaying, updatedNominated);
 
   return {
     ...state,
     turn: state.turn + 1,
 
-    currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== eliminatedPlayer.id),
+    currentlyPlaying: syncedPlaying.filter(p => p.id !== eliminatedPlayer.id),
     teams: state.teams.map(team =>
       team.filter(p => p.id !== eliminatedPlayer.id)
     ),
-    eliminated: [...state.eliminated, eliminatedPlayer],
+    eliminated: [...state.eliminated, { ...eliminatedPlayer }],
   };
 }
 
 function mergeRound(state, challengeName) {
-  const { logEvent } = useSimStore.getState();
-
   // each player is its own 'party'
   const [placements, scores] = getChallengeResults(challengeName, state.currentlyPlaying.map(p => [p]));
   
@@ -223,32 +221,45 @@ function mergeRound(state, challengeName) {
 
   logEvent({ type: 'header', label: 'Immunity Challenge' }, state.turn);
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` }, state.turn);
-  logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` }, state.turn);
+  logEvent({ type: 'immunity', player: updatedImmune }, state.turn);
+
+  // Camp events
+  logEvent({ type: 'header', label: 'Camp' }, state.turn);
+  const afterCamp = runCampEvents(state.currentlyPlaying, state.turn);
+  state = { ...state, currentlyPlaying: afterCamp };
+
+  // Idol finding for non-immune players
   
-  const nominated = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
+  const vulnerable = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
 
   // Allow players a chance to find idols before the vote
-  state = attemptFindIdols(state, nominated);
+  state = attemptFindIdols(state, updatedVulnerable);
+  const updatedVulnerable = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
 
-  const { eliminated: eliminatedPlayer, voteLog } = voteOut(nominated, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id], state.turn);
+  const { eliminated: eliminatedPlayer, voteLog, updatedNominated, updatedWinner } = voteOut(updatedVulnerable, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id], state.turn);
   
   logEvent({ type: 'header', label: 'General Meeting' }, state.turn);
   logEvent({ type: 'vote', voteLog }, state.turn);
-  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` }, state.turn);
+  logEvent({ type: 'svElim', eliminated: eliminatedPlayer, remaining: state.currentlyPlaying.length - 1 }, state.turn);
+
+  let syncedPlaying = syncUpdatedNominated(state.currentlyPlaying, updatedNominated)
+    .filter(p => p.id !== eliminatedPlayer.id)
+    .map(p => {
+      if (p.id === immunePlayer.id) return updatedImmune;
+      if (updatedWinner && p.id === updatedWinner.id) return { ...p, notoriety: updatedWinner.notoriety };
+      return p;
+    });
 
   return {
     ...state,
     turn: state.turn + 1,
-    currentlyPlaying: state.currentlyPlaying
-      .filter(p => p.id !== eliminatedPlayer.id)
-      .map(p => p.id === immunePlayer.id ? updatedImmune : p),
-    eliminated: [...state.eliminated, eliminatedPlayer],
+    currentlyPlaying: syncedPlaying,
+    eliminated: [...state.eliminated, { ...eliminatedPlayer }],
     jury: [...state.jury, { ...eliminatedPlayer }],
-  }
+  };
 }
 
 function juryFinale(state) {
-    const { logEvent } = useSimStore.getState();
     const { winner, voteLog } = juryVote(state.currentlyPlaying, state.jury);
 
     logEvent({ type: 'header', label: 'Final Tribal Council' }, state.turn);
