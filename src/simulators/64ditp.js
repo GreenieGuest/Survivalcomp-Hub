@@ -127,11 +127,27 @@ function teamRound(state, challengeName) {
   logEvent({ type: 'header', label: 'Immunity Challenge' }, state.turn);
   logEvent({ type: 'system', message: `The challenge is ${challengeName}.` }, state.turn);
   logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` }, state.turn);
+  logEvent({
+    type: 'teamChallengeResults',
+    results: placements.map((teamIndex, i) => ({
+      team: state.teamInfo[teamIndex],
+      score: scores[i],
+      lost: teamIndex === losingTeamIndex
+    }))
+  }, state.turn);
+
+  // Camp events
+  logEvent({ type: 'header', label: 'Camp' }, state.turn);
+  const afterCamp = runCampEvents(state.currentlyPlaying, state.turn);
+  state = { ...state, currentlyPlaying: afterCamp };
+
+  // Idol finding for losing team
 
   // Allow players a chance to find idols before the vote
   state = attemptFindIdols(state, losingTeam);
+  const updatedLosingTeam = state.currentlyPlaying.filter(p => losingTeam.find(t => t.id === p.id));
 
-  const { eliminated: eliminatedPlayer, voteLog } = voteOut(losingTeam, losingTeam, state.currentlyPlaying.length, [], state.turn)
+  const { eliminated: eliminatedPlayer, voteLog } = voteOut(updatedLosingTeam, updatedLosingTeam, state.currentlyPlaying.length, [], state.turn)
   logEvent({ type: 'header', label: 'General Meeting' }, state.turn);
   logEvent({ type: 'vote', voteLog }, state.turn);
   logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` }, state.turn);
