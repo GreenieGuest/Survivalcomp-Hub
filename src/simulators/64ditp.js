@@ -71,9 +71,8 @@ function updatePhase(state) {
   if (state.quarter !== PHASES.MERGE && state.quarter !== PHASES.MERGATORY &&
     (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
   )
-    const newTeams = assignTeams(teams.flat(), teams.length - 1);
-
     {
+    const newTeams = assignTeams(teams.flat(), teams.length - 1);
     logEvent({ type: 'header', label: 'Team Swap' }, state.turn);
     logEvent({ type: 'system', message: 'The teams have swapped, and the dynamic has shifted.' }, state.turn);
 
@@ -103,6 +102,55 @@ function pickChallenge(state) {
   };
 }
 
+function syncUpdatedNominated(currentlyPlaying, updatedNominated) {
+  if (!updatedNominated) return currentlyPlaying;
+
+  return currentlyPlaying.map(p => {
+    const updated = updatedNominated.find(u => u.id === p.id);
+    return updated ? { ...p, idols: updated.idols } : p;
+  });
+}
+
+// Idol discovery: small chance each round for players (within the provided pool)
+function attemptFindIdols(state, pool) {
+  const { logEvent } = useSimStore.getState();
+  // probabilities
+  const HII_CHANCE = state.config?.hiiChance ?? 0.06; // 6%
+  const SUPER_CHANCE = state.config?.superChance ?? 0.01; // 1%
+
+  const updatedPlayers = state.currentlyPlaying.map(p => ({ ...p }));
+
+  for (const player of pool) {
+    const idx = updatedPlayers.findIndex(u => u.id === player.id);
+    if (idx === -1) continue;
+
+    // ensure idols array exists
+    updatedPlayers[idx].idols = updatedPlayers[idx].idols ?? [];
+
+    // skip if already has a super
+    if (Math.random() < SUPER_CHANCE) {
+      updatedPlayers[idx] = {
+        ...updatedPlayers[idx],
+        idols: [...updatedPlayers[idx].idols, { type: IDOL_TYPES.SUPER }]
+      };
+      logEvent({ type: 'idolFind', player: { ...updatedPlayers[idx] }, idolType: IDOL_TYPES.SUPER }, state.turn);
+      continue; // skip HII roll if super found this attempt
+    }
+
+    // HII discovery
+    if (Math.random() < HII_CHANCE) {
+      updatedPlayers[idx] = {
+        ...updatedPlayers[idx],
+        idols: [...updatedPlayers[idx].idols, { type: IDOL_TYPES.HII }]
+      };
+      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` }, state.turn);
+      console.log(`${updatedPlayers[idx].name} found a Hidden Immunity Idol!`);
+    }
+  }
+
+  return { ...state, currentlyPlaying: updatedPlayers };
+}
+
 // LOGIC
 
 function teamRound(state, challengeName) {
@@ -116,7 +164,7 @@ function teamRound(state, challengeName) {
     randomSample(team, smallestTeamSize)
   );
 
-  const [placements] = getChallengeResults(challengeName, participatingTeamMembers);
+  const [placements, scores] = getChallengeResults(challengeName, participatingTeamMembers);
 
   const losingTeamIndex = placements.at(-1);
   console.log(losingTeamIndex)
@@ -282,41 +330,4 @@ export function survivor(state) {
   return withChallenge.quarter !== PHASES.MERGE
     ? teamRound(withChallenge, challengeName)
     : mergeRound(withChallenge, challengeName);
-}
-
-// Idol discovery: small chance each round for players (within the provided pool)
-function attemptFindIdols(state, pool) {
-  const { logEvent } = useSimStore.getState();
-  // probabilities
-  const HII_CHANCE = state.config?.hiiChance ?? 0.06; // 6%
-  const SUPER_CHANCE = state.config?.superChance ?? 0.01; // 1%
-
-  const updatedPlayers = state.currentlyPlaying.map(p => ({ ...p }));
-
-  for (const player of pool) {
-    const idx = updatedPlayers.findIndex(u => u.id === player.id);
-    if (idx === -1) continue;
-
-    // ensure idols array exists
-    updatedPlayers[idx].idols = updatedPlayers[idx].idols ?? [];
-
-    // skip if already has a super
-    if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.SUPER)) {
-      if (Math.random() < SUPER_CHANCE) {
-        updatedPlayers[idx].idols.push({ type: IDOL_TYPES.SUPER });
-        logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Super Idol!` }, state.turn);
-        console.log(`${updatedPlayers[idx].name} found a Super Idol!`);
-        continue; // skip HII if super found
-      }
-    }
-
-    // HII discovery
-    if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.HII) && Math.random() < HII_CHANCE) {
-      updatedPlayers[idx].idols.push({ type: IDOL_TYPES.HII });
-      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` }, state.turn);
-      console.log(`${updatedPlayers[idx].name} found a Hidden Immunity Idol!`);
-    }
-  }
-
-  return { ...state, currentlyPlaying: updatedPlayers };
 }
