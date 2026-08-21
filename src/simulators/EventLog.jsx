@@ -117,6 +117,47 @@ function EventEntry({event}) {
                 </Box>
             );
 
+        // 64DITP
+
+        case 'teamAssignment':
+            return (
+                <Text>
+                    <Badge style={{ backgroundColor: event.team?.color }} mr={1}>{event.team?.name}</Badge>
+                    {event.players.map((p, i) => (
+                        <span key={p.id}><Player player={p} />{i < event.players.length - 1 ? ', ' : ''}</span>
+                    ))}
+                </Text>
+            );
+
+        case 'teamChallengeResults':
+            return (
+                <Table.Root size="sm" mt={1}>
+                    <Table.Body>
+                        {event.results.map((r, i) => (
+                            <Table.Row key={i} bg={r.lost ? 'red.950' : 'transparent'}>
+                                <Table.Cell>
+                                    <Badge style={{ backgroundColor: r.team?.color }}>{r.team?.name}</Badge>
+                                </Table.Cell>
+                                <Table.Cell>{r.score?.toFixed(1)}</Table.Cell>
+                                <Table.Cell>{r.lost ? 'Loses' : 'Wins'}</Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table.Root>
+            );
+
+        case 'immunity':
+            return <Text><Player player={event.player} /> wins individual immunity!</Text>;
+
+        case 'svElim':
+            return (
+                <Text>
+                    {event.team && <><Badge style={{ backgroundColor: event.team?.color }}>{event.team?.name}</Badge>{' '}</>}
+                    votes out <Player player={event.eliminated} />. {event.remaining} remain.
+                </Text>
+            );
+
+
         case 'vote':
             const rounds = event.voteLog ?? event.log ?? [];
             return (
@@ -172,8 +213,14 @@ function EventEntry({event}) {
                 <Box>
                     <Text fontWeight="bold">Jury Duty</Text>
                     <Table.Root size="sm" mt={1}>
+                        <Table.Header>
+                            <Table.Row>
+                                <Table.ColumnHeader>Finalist</Table.ColumnHeader>
+                                <Table.ColumnHeader>Jury Votes</Table.ColumnHeader>
+                            </Table.Row>
+                        </Table.Header>
                         <Table.Body>
-                            {event.voteLog.map((v, i) => (
+                            {event.voteLog.sort((a, b) => b.votes - a.votes).map((v, i) => (
                                 <Table.Row key={i}>
                                     <Table.Cell><Player player={v.player} /></Table.Cell>
                                     <Table.Cell>{v.votes} votes</Table.Cell>
@@ -183,6 +230,51 @@ function EventEntry({event}) {
                     </Table.Root>
                 </Box>
             )
+
+        case 'fireMaking':
+            return (
+                <Box>
+                    <Text fontWeight="bold">Fire Making Challenge</Text>
+                    <Text><Player player={event.winner} /> wins fire making! ({event.p1Score} vs {event.p2Score})</Text>
+                    <Text><Player player={event.loser} /> is eliminated.</Text>
+                </Box>
+            );
+
+        // ── Idols ──
+        case 'idolFind':
+            return (
+                <Text>
+                    <Player player={event.player} /> found a{' '}
+                    {event.idolType === 'super' ? 'Super Idol' : 'Hidden Immunity Idol'}!
+                </Text>
+            );
+
+        case 'idolPlay':
+            return (
+                <Text>
+                    <Player player={event.player} /> plays a{' '}
+                    {event.idolType === 'super' ? 'Super Idol' : 'Hidden Immunity Idol'}!
+                    {' '}All votes against them are nullified.
+                </Text>
+            );
+
+        // ── Alliances ──
+        case 'allianceForm':
+            return (
+                <Text>
+                    <Player player={event.leader} /> forms <em>{event.name}</em> with <Player player={event.ally} />.
+                </Text>
+            );
+
+        case 'allianceFracture':
+            return (
+                <Text>
+                    <Player player={event.player} /> has left {event.factionName}.
+                </Text>
+            );
+
+        case 'campEvent':
+            return <Text color="fg.muted">{event.message}</Text>;
 
         default:
             if (Array.isArray(event)) {
