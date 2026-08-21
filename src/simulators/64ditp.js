@@ -51,8 +51,8 @@ function updatePhase(state) {
 
   // Merge condition (Must be checked before swap or swap will override)
   if (currentlyPlaying.length === mergeThreshold) {
-    logEvent({ type: 'header', label: 'Merge' });
-    logEvent({ type: 'system', message: 'The tribes have merged! Individual immunity is now in play.' });
+    logEvent({ type: 'header', label: 'Merge' }, state.turn);
+    logEvent({ type: 'system', message: 'The tribes have merged! Individual immunity is now in play.' }, state.turn);
     return {
       ...state,
       quarter: PHASES.MERGE
@@ -64,8 +64,8 @@ function updatePhase(state) {
     (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
   )
     {
-    logEvent({ type: 'header', label: 'Team Swap' });
-    logEvent({ type: 'system', message: 'The teams have swapped, and the dynamic has shifted.' });
+    logEvent({ type: 'header', label: 'Team Swap' }, state.turn);
+    logEvent({ type: 'system', message: 'The teams have swapped, and the dynamic has shifted.' }, state.turn);
     return {
       ...state,
       teams: assignTeams(teams.flat(), teams.length - 1),
@@ -109,17 +109,17 @@ function teamRound(state, challengeName) {
   const losingTeam = state.teams[losingTeamIndex];
   const losingTeamInfo = state.teamInfo[losingTeamIndex];
 
-  logEvent({ type: 'header', label: 'Immunity Challenge' });
-  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
-  logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` });
+  logEvent({ type: 'header', label: 'Immunity Challenge' }, state.turn);
+  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` }, state.turn);
+  logEvent({ type: 'system', message: `${losingTeamInfo.name} loses the challenge and will have to vote someone out tonight.` }, state.turn);
 
   // Allow players a chance to find idols before the vote
   state = attemptFindIdols(state, losingTeam);
 
-  const { eliminated: eliminatedPlayer, voteLog } = voteOut(losingTeam, losingTeam, state.currentlyPlaying.length)
-  logEvent({ type: 'header', label: 'General Meeting' });
-  logEvent({ type: 'vote', voteLog });
-  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
+  const { eliminated: eliminatedPlayer, voteLog } = voteOut(losingTeam, losingTeam, state.currentlyPlaying.length, [], state.turn)
+  logEvent({ type: 'header', label: 'General Meeting' }, state.turn);
+  logEvent({ type: 'vote', voteLog }, state.turn);
+  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` }, state.turn);
 
   return {
     ...state,
@@ -142,20 +142,20 @@ function mergeRound(state, challengeName) {
   const immunePlayer = state.currentlyPlaying[placements[0]];
   const updatedImmune = { ...immunePlayer, notoriety: (immunePlayer.notoriety ?? 0) + 1 };
 
-  logEvent({ type: 'header', label: 'Immunity Challenge' });
-  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` });
-  logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` });
+  logEvent({ type: 'header', label: 'Immunity Challenge' }, state.turn);
+  logEvent({ type: 'system', message: `The challenge is ${challengeName}.` }, state.turn);
+  logEvent({ type: 'system', message: `${immunePlayer.name} wins immunity! Everyone else will be at risk for being voted out tonight.` }, state.turn);
   
   const nominated = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
 
   // Allow players a chance to find idols before the vote
   state = attemptFindIdols(state, nominated);
 
-  const { eliminated: eliminatedPlayer, voteLog } = voteOut(nominated, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id]);
+  const { eliminated: eliminatedPlayer, voteLog } = voteOut(nominated, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id], state.turn);
   
-  logEvent({ type: 'header', label: 'General Meeting' });
-  logEvent({ type: 'vote', voteLog });
-  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` });
+  logEvent({ type: 'header', label: 'General Meeting' }, state.turn);
+  logEvent({ type: 'vote', voteLog }, state.turn);
+  logEvent({ type: 'system', message: `${eliminatedPlayer.name} has been voted out..` }, state.turn);
 
   return {
     ...state,
@@ -172,10 +172,10 @@ function juryFinale(state) {
     const { logEvent } = useSimStore.getState();
     const { winner, voteLog } = juryVote(state.currentlyPlaying, state.jury);
 
-    logEvent({ type: 'header', label: 'Final Tribal Council' });
-    logEvent({ type: 'juryVote', finalists: state.currentlyPlaying, voteLog });
-    logEvent({ type: 'header', label: 'Winner' });
-    logEvent({ type: 'system', message: `${winner.name} wins the game!` });
+    logEvent({ type: 'header', label: 'Final Tribal Council' }, state.turn);
+    logEvent({ type: 'juryVote', finalists: state.currentlyPlaying, voteLog }, state.turn);
+    logEvent({ type: 'header', label: 'Winner' }, state.turn);
+    logEvent({ type: 'system', message: `${winner.name} wins the game!` }, state.turn);
 
     return {
         ...state,
@@ -273,7 +273,7 @@ function attemptFindIdols(state, pool) {
     if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.SUPER)) {
       if (Math.random() < SUPER_CHANCE) {
         updatedPlayers[idx].idols.push({ type: IDOL_TYPES.SUPER });
-        logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Super Idol!` });
+        logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Super Idol!` }, state.turn);
         console.log(`${updatedPlayers[idx].name} found a Super Idol!`);
         continue; // skip HII if super found
       }
@@ -282,7 +282,7 @@ function attemptFindIdols(state, pool) {
     // HII discovery
     if (!updatedPlayers[idx].idols.find(i => i.type === IDOL_TYPES.HII) && Math.random() < HII_CHANCE) {
       updatedPlayers[idx].idols.push({ type: IDOL_TYPES.HII });
-      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` });
+      logEvent({ type: 'system', message: `${updatedPlayers[idx].name} found a Hidden Immunity Idol!` }, state.turn);
       console.log(`${updatedPlayers[idx].name} found a Hidden Immunity Idol!`);
     }
   }

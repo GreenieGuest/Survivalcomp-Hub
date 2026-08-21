@@ -58,7 +58,7 @@ export function banRoulette(state) {
           chance: state.chance,
           survived: false,
           remaining: state.currentlyPlaying.length - 1
-        })
+        }, state.turn)
 
     return {
       ...state,
@@ -75,7 +75,7 @@ export function banRoulette(state) {
           chance: state.chance,
           survived: true,
           remaining: state.currentlyPlaying.length
-        })
+        }, state.turn)
 
     return {
       ...state,

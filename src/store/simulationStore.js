@@ -8,8 +8,6 @@ export const useSimStore = create(
         simCount: 0,
         config: null,
 
-        gameState: null,
-
         // Actions
         setPlayerList: (updater) => set((state) => ({
             playerList: typeof updater === 'function' ? updater(state.playerList) : updater
@@ -31,19 +29,12 @@ export const useSimStore = create(
         },
 
         clearStats: () => set({ playerStats: {}, simCount: 0 }),
-        setGameState: (gameState) => set({ gameState }),
 
-        turn: 0,
-        setTurn: (turn) => set({ turn }),
-
-        // Events Handler
+        // Events — turn is passed explicitly by the sim, not derived from separate state
         events: [],
-        logEvent: (event) => {
-            const turn = get().turn
-            set(state => ({
-                events: [...state.events, { ...event, turn }]
-            }))
-        },
+        logEvent: (event, turn) => set(state => ({
+            events: [...state.events, { ...event, turn: turn ?? 0 }]
+        })),
         clearEvents: () => set({ events: [] }),
     }),
     {

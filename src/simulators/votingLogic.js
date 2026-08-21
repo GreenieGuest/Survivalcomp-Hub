@@ -195,8 +195,8 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [])
     // "If anybody has a Hidden Immunity Idol and you want to play it... now would be the time to do so."
     ({ votes, nominated: currentNominated, safeIds } = resolveHII(currentNominated, votes, safeIds));
 
-    const maxVotes = Math.max(...votes);
-    const tiedIndices = votes.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
+    let maxVotes = Math.max(...votes);
+    let tiedIndices = votes.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
 
     // --- Super Idol play: can be played AFTER votes are read to nullify votes for the top vote-getter ---
     if (tiedIndices.length === 1) {

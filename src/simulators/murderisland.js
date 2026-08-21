@@ -27,7 +27,7 @@ export function initialize_MI(players, config) {
         type: "murderIslandStart",
         players: playerProfiles,
         message: players.length + " players are trapped on Murder Island..."
-    })
+    }, 0)
 
   return {
     turn: 0,
@@ -76,7 +76,7 @@ export function murderIsland(state) {
     const victim = randomChoice(state.currentlyPlaying.filter(p => p.id !== murderer.id))
 
     if (state.currentlyPlaying.filter(p => p.id !== victim.id).length <= 1) { // murderer victory
-        logEvent({ type: 'system', message: `${murderer.name} eliminates ${victim.name} and becomes the sole survivor of Murder Island.` })
+        logEvent({ type: 'system', message: `${murderer.name} eliminates ${victim.name} and becomes the sole survivor of Murder Island.` }, state.turn)
         return {
         ...state,
         winner: murderer || null,
@@ -107,7 +107,7 @@ export function murderIsland(state) {
           fakeClue1: fakeClue1,
           fakeClue2: fakeClue2,
           remaining: state.currentlyPlaying.length - 2
-        })
+        }, state.turn)
     return {
         ...state,
         currentlyPlaying: state.currentlyPlaying.filter(p => p.id !== victim.id && p.id !== executed.id),

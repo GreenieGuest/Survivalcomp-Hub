@@ -15,8 +15,8 @@ export function getDefaultWinner(state, customMessage) {
     ? state.eliminated[state.eliminated.length - 1] // last eliminated player wins by default
     : state.currentlyPlaying[0];
 
-    logEvent({ type: 'header', label: 'Winner' })
-    logEvent({ type: 'system', message: customMessage ?? `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` })
+    logEvent({ type: 'header', label: 'Winner' }, state.turn)
+    logEvent({ type: 'system', message: customMessage ?? `${soleSurvivor?.name ?? 'No one'} wins! Press 'Start Game' to simulate again.` }, state.turn)
 
     return {
     ...state,

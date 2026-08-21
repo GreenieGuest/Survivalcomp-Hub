@@ -163,10 +163,10 @@ export function algicosathlon(state) {
   const chosen = elimination(state.currentlyPlaying, challengeName);
   console.log("This should only run once");
 
-  logEvent({ type: 'header', label: 'Challenge' })
-  logEvent({ type: 'challengeResults', challengeName, results });
-  logEvent({ type: 'header', label: 'Elimination' });
-  logEvent({ type: 'algoElim', chosen, remaining: state.currentlyPlaying.length - 1 });
+  logEvent({ type: 'header', label: 'Challenge' }, state.turn)
+  logEvent({ type: 'challengeResults', challengeName, results }, state.turn);
+  logEvent({ type: 'header', label: 'Elimination' }, state.turn);
+  logEvent({ type: 'algoElim', chosen, remaining: state.currentlyPlaying.length - 1 }, state.turn);
 
   return {
     ...state,
