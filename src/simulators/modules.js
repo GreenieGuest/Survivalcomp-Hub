@@ -20,6 +20,7 @@ export function getDefaultWinner(state, customMessage) {
 
     return {
     ...state,
+    turn: state.turn + 1, // Needs to always update even if there is a finale!!
     winner: soleSurvivor || null,
     currentlyPlaying: [],
     eliminated: (soleSurvivor ? [...state.eliminated, soleSurvivor] : state.eliminated), // Even winners must be eliminated... (for the leaderboards)
