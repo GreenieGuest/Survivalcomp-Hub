@@ -244,7 +244,7 @@ export function voteOut(nominated, votingPool, playersRemaining, immuneIds = [],
     const eliminated = drawRocks(tiedPlayers, currentVotingPool, safeIds);
     voteLog.push({ round: 'rocks', eliminated: { ...eliminated } });
 
-    return { eliminated: { ...rocksElim }, voteLog, updatedNominated: currentNominated };
+    return { eliminated: { ...eliminated }, voteLog, updatedNominated: currentNominated };
 }
 
 export function juryVote(finalists, jury) {

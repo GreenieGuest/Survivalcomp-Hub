@@ -233,7 +233,7 @@ function mergeRound(state, challengeName) {
   const vulnerable = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
 
   // Allow players a chance to find idols before the vote
-  state = attemptFindIdols(state, updatedVulnerable);
+  state = attemptFindIdols(state, vulnerable);
   const updatedVulnerable = state.currentlyPlaying.filter(p => p.id !== immunePlayer.id);
 
   const { eliminated: eliminatedPlayer, voteLog, updatedNominated, updatedWinner } = voteOut(updatedVulnerable, state.currentlyPlaying, state.currentlyPlaying.length, [immunePlayer.id], state.turn);
@@ -269,6 +269,7 @@ function juryFinale(state) {
 
     return {
         ...state,
+        turn: state.turn + 1, // Needs to always update even if there is a finale!!
         winner,
         currentlyPlaying: [],
         eliminated: [...state.eliminated, ...state.currentlyPlaying],
