@@ -1,10 +1,12 @@
 import { randomChoice, randomSample } from "./utils";
 import { getChallengeResults, isGameOver, getDefaultWinner } from "./modules";
 import { useSimStore } from "../store/simulationStore";
-import { voteOut, juryVote, IDOL_TYPES } from "./votingLogic";
+import { voteOut, juryVote, runCampEvents, IDOL_TYPES } from "./votingLogic";
 import default_teams from "../constants/defaultTeams";
 
 // constants
+
+const logEvent = (event, turn) => useSimStore.getState().logEvent(event, turn);
 
 const PHASES = {
   START: 'S',
@@ -36,15 +38,21 @@ function assignTeams(players, numTeams) {
 }
 
 function updatePhase(state) {
-  const { logEvent } = useSimStore.getState();
-  let { currentlyPlaying, castSize, teams } = state;
-  let mergeThreshold = state.config.mergeThreshold ?? Math.floor(castSize / 2);
+  const { currentlyPlaying, castSize, teams } = state;
+  const mergeThreshold = state.config.mergeThreshold ?? Math.floor(castSize / 2);
 
   // Initial team assignment
   if (currentlyPlaying.length === castSize) {
+    const newTeams = assignTeams(currentlyPlaying, +state.config.startingTeams);
+
+    logEvent({ type: 'header', label: 'Team Assignment' }, state.turn);
+    newTeams.forEach((team, i) =>
+      logEvent({ type: 'teamAssignment', team: state.teamInfo[i], players: team }, state.turn)
+    );
+
     return {
       ...state,
-      teams: assignTeams(currentlyPlaying, +state.config.startingTeams),
+      teams: newTeams,
       quarter: PHASES.THREE_TEAMS
     };
   }
@@ -63,12 +71,19 @@ function updatePhase(state) {
   if (state.quarter !== PHASES.MERGE && state.quarter !== PHASES.MERGATORY &&
     (state.config.swapThresholds.includes(currentlyPlaying.length) || Math.min(...teams.map(a => a.length)) === 1)
   )
+    const newTeams = assignTeams(teams.flat(), teams.length - 1);
+
     {
     logEvent({ type: 'header', label: 'Team Swap' }, state.turn);
     logEvent({ type: 'system', message: 'The teams have swapped, and the dynamic has shifted.' }, state.turn);
+
+    newTeams.forEach((team, i) =>
+      logEvent({ type: 'teamAssignment', team: state.teamInfo[i], players: team }, state.turn)
+    );
+
     return {
       ...state,
-      teams: assignTeams(teams.flat(), teams.length - 1),
+      teams: newTeams,
       quarter: PHASES.TWO_TEAMS
     };
   }
