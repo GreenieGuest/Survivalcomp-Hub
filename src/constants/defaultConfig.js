@@ -5,18 +5,7 @@ const default_config = {
     startingTeams: 2,
     swapThresholds: [],
     teamInfo: [
-        {
-            name: "Red Drums",
-            color: "#FF0000",
-        },
-        {
-            name: "Green Giants",
-            color: "#00FF00",
-        },
-        {
-            name: "Blue Jays",
-            color: "#0000FF",
-        },
+        // player adds here
     ],
 };
 export default default_config;
