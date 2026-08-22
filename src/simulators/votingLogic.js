@@ -121,16 +121,30 @@ function getVoteWeight(candidate, voter) {
 function castVotes(nominated, votingPool) {
     const votes = new Array(nominated.length).fill(0);
     for (const voter of votingPool) {
-        const weights = nominated.map(candidate => getVoteWeight(candidate, voter));
+        const  weights = nominated.map(candidate => getVoteWeight(candidate, voter));
 
         // Voter chooses what looks like the best move
         const maxWeight = Math.max(...weights)
 
         // see how many people are tied
-        const topCandidates = nominated.filter((_, i) => weights[i] === maxWeight);
+        let topCandidates = nominated.filter((_, i) => weights[i] === maxWeight);
+        let retryAttempts = 0;
         // if multiple people have the same weight, decide based on random social roll
-        topCandidates.sort((a, b) => socScope(a) - socScope(b));
-        const votedFor = topCandidates[0];
+        while (topCandidates.length > 1) {
+            console.log(topCandidates)
+            // Some players are so pathetic socially that it will just tie over and over again. this retry function "attempts" to solve that
+            if (retryAttempts > 4) break;
+            const socialRolls = topCandidates.map(candidate => socScope(candidate));
+            const minSocial = Math.min(...socialRolls)
+            topCandidates = topCandidates.filter((_, i) => socialRolls[i] === minSocial);
+            retryAttempts++;
+        }
+        let votedFor;
+        if (topCandidates.length > 1) {
+            votedFor = randomChoice(topCandidates)
+        } else {
+            votedFor = topCandidates[0];
+        }
 
         // Finally, cast the vote
         votes[nominated.indexOf(votedFor)] += 1;
