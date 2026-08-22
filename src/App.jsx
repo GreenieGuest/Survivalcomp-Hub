@@ -66,6 +66,7 @@ function App() {
 
   //Initialize every sim based on needs and types (points, teams, etc)
   const handleStartGame = () => {
+    clearEvents();
     const sim = simulations[simulation];
     if (!sim) return;
 
@@ -83,6 +84,7 @@ function App() {
 
   //Handles fast forward based on running simulation
   const handleFastForward = () => {
+    clearEvents();
     const sim = simulations[simulation];
     if (!sim) return;
 
@@ -93,7 +95,6 @@ function App() {
     console.log(gameState?.turn)
     if (!gameState?.winner) return;
     applyGameResults(gameState);
-    clearEvents();
   }, [gameState, applyGameResults]);
 
 

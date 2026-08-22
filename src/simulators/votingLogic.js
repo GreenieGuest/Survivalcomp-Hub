@@ -97,7 +97,7 @@ function getVoteWeight(candidate, voter) {
     if (
         voter.faction &&
         candidate.faction &&
-        voter.faction === candidate.faction
+        voter.faction?.id === candidate.faction?.id
     ) {
         weight -= 1000;
     }
