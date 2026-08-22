@@ -58,7 +58,7 @@ function updatePhase(state) {
   }
 
   // Merge condition (Must be checked before swap or swap will override)
-  if (currentlyPlaying.length === mergeThreshold) {
+  if (currentlyPlaying.length === Number(mergeThreshold)) {
     logEvent({ type: 'header', label: 'Merge' }, state.turn);
     logEvent({ type: 'system', message: 'The tribes have merged! Individual immunity is now in play.' }, state.turn);
     return {

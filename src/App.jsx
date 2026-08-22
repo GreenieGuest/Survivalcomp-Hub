@@ -27,7 +27,7 @@ import { useSimStore } from "./store/simulationStore";
 import default_config from "./constants/defaultConfig.js";
 
 function App() {
-  const { playerList = [], setPlayerList, playerStats, simCount, setConfig, clearStats, applyGameResults } = useSimStore()
+  const { playerList = [], setPlayerList, playerStats, simCount, setConfig, clearStats, applyGameResults, clearEvents } = useSimStore()
   const storedConfig = useSimStore(state => state.config);
 
   const [simulation, setSimulation] = useState(null);
@@ -93,6 +93,7 @@ function App() {
     console.log(gameState?.turn)
     if (!gameState?.winner) return;
     applyGameResults(gameState);
+    clearEvents();
   }, [gameState, applyGameResults]);
 
 

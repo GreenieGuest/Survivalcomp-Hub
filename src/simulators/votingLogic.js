@@ -128,6 +128,8 @@ function castVotes(nominated, votingPool) {
 
         // see how many people are tied
         let topCandidates = nominated.filter((_, i) => weights[i] === maxWeight);
+        console.log(topCandidates)
+        console.log(maxWeight)
         let retryAttempts = 0;
         // if multiple people have the same weight, decide based on random social roll
         while (topCandidates.length > 1) {
