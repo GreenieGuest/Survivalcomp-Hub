@@ -22,10 +22,10 @@ export const useSimStore = create(
                 newStats[player.id] = {
                     ...prev,
                     wins: prev.wins + (gameState.castSize - index === 1 ? 1 : 0),
-                    podiums: prev.podiums + (gameState.castSize - index < 4 ? 1 : 0),
-                    upperquartile: prev.upperquartile + (gameState.castSize - index < gameState.castSize / 4 ? 1 : 0),
-                    tophalf: prev.tophalf + (gameState.castSize - index < gameState.castSize / 2 ? 1 : 0),
-                    lowerquartile: prev.lowerquartile + (gameState.castSize - index < 3 * gameState.castSize / 4 ? 1 : 0),
+                    podiums: (prev.podiums ?? 0) + (gameState.castSize - index < 4 ? 1 : 0),
+                    upperquartile: (prev.upperquartile ?? 0) + (gameState.castSize - index < gameState.castSize / 4 ? 1 : 0),
+                    tophalf: (prev.tophalf ?? 0) + (gameState.castSize - index < gameState.castSize / 2 ? 1 : 0),
+                    lowerquartile: (prev.lowerquartile ?? 0) + (gameState.castSize - index < 3 * gameState.castSize / 4 ? 1 : 0),
                     placements: [...prev.placements, gameState.castSize - index],
                 }
             });
